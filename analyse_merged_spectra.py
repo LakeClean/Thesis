@@ -20,7 +20,7 @@ twl = template_data['wavelength']
 #plt.show()
 
 #import the RGB info
-lines = open('NOT/Target_names_and_info.txt').read().split('\n')[1:14]
+lines = open('/home/lakeclean/Documents/speciale/NOT/Target_names_and_info.txt').read().split('\n')[1:14]
 all_target_names = [] # Just a list of the names
 RGBs = [] # names of known RGB stars
 for line in lines:
@@ -46,8 +46,8 @@ def analyse_spectrum(file, start_wl=0, end_wl=100000,
                      
                      getBF_rvr=401, getBF_dv=1.0,
                      
-                     rotbf2_fit_fitsize=30,rotbf2_fit_res=60000,rotbf2_fit_smooth=1.0,
-                     rotbf2_fit_vsini1=5.0,rotbf2_fit_vsini2=5.0,rotbf2_fit_vrad1=-23.0,
+                     rotbf2_fit_fitsize=30,rotbf2_fit_res=60000,rotbf2_fit_smooth=2.0,
+                     rotbf2_fit_vsini1=5.0,rotbf2_fit_vsini2=5.0,rotbf2_fit_vrad1=-30.0,
                      rotbf2_fit_vrad2=-17.0,rotbf2_fit_ampl1=0.5,rotbf2_fit_ampl2=0.5,
                      rotbf2_fit_print_report=True,rotbf2_fit_smoothing=True,
                      
@@ -105,7 +105,7 @@ def analyse_spectrum(file, start_wl=0, end_wl=100000,
     header = pyfits.getheader(file)
 
     epoch_name = header['TCSTGT'].strip(' ') #name of target
-    epoch_date = header['DATE'].strip(' ')   #date of fits creation
+    epoch_date = header['DATE_OBS'].strip(' ')   #date of fits creation
 
     
     if epoch_name in RGBs:
@@ -196,6 +196,7 @@ def analyse_spectrum(file, start_wl=0, end_wl=100000,
         #Pick out correct wl range
         index = np.where((lam>begin) & ( lam<end))[0]
         wl = lam[index]
+        print(len(wl))
         fl = data[index]
         if save_data: save_datas([wl,fl],['wavelength [Å]', 'flux (raw)'],
                                  f"bin_{i}_size_{bin_size}_raw_spectrum")
@@ -461,7 +462,7 @@ def analyse_spectrum(file, start_wl=0, end_wl=100000,
 
 #### importing all the spectra:
 
-lines = open('/home/lakeclean/Documents/speciale/file_log.txt').read().split('\n')
+lines = open('/home/lakeclean/Documents/speciale/merged_file_log.txt').read().split('\n')
 files = []
 IDs = []
 dates = []
@@ -480,10 +481,10 @@ for line in lines[:-1]:
 for file,ID,date in zip(files,IDs,dates):
     #analyse_spectrum(file,bin_size=200,use_SVD=,
     #                 show_bin_plots=False,show_plots=False)
-    if ID == 'KIC9652971':
-        #if date == '2024-04-14T02:33:35':
-        analyse_spectrum(file,bin_size=200,use_SVD=True,SB_type = 2,
-                         show_bin_plots=True,save_data=False,
+    if ID == 'KIC-12317678':
+        #if date == '2024-07-13T00:26:25.672':
+            analyse_spectrum(file,bin_size=200,use_SVD=True,SB_type = 1,
+                         show_bin_plots=False,save_data=False,
                          save_plots=False)
     
     

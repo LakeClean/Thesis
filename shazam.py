@@ -634,9 +634,9 @@ def rotbf2_fit(vel,bf,fitsize,res=60000,smooth=2.0,vsini1=5.0,vsini2=5.0,vrad1=0
   params = lmfit.Parameters()
   #params.add('ampl1', value = bfgs[peak])
   params.add('ampl1', value = ampl1,min=0) #NOTICE min=0 set by Søren
-  params.add('vrad1', value = vrad1)
-  params.add('ampl2', value = ampl2,min=0) #NOTICE min=0 set by Søren
-  params.add('vrad2', value = vrad2)
+  params.add('vrad1', value = vrad1,max=1000,min=-1000)#NOTICE min=0 set by Søren
+  params.add('ampl2', value = ampl2,min=0) #NOTICE min and max set by Søren
+  params.add('vrad2', value = vrad2, max=1000,min=-1000)#NOTICE min and max set by Søren
   params.add('gwidth', value = gwidth,vary = False)
   params.add('const', value = 0.0)
   params.add('vsini1', value = vsini1)
@@ -726,8 +726,8 @@ def rotbf_fit(vel,bf,fitsize,res=60000,smooth=5.0,vsini=5.0,print_report=True):
   wf[idx] = 1.0
 
   params  = lmfit.Parameters()
-  params.add( 'ampl1',  value = bfgs[peak] )
-  params.add( 'vrad1',  value = vel[peak] )
+  params.add( 'ampl1',  value = bfgs[peak], min=0)#NOTICE min and max set by Søren
+  params.add( 'vrad1',  value = vel[peak] ,min=-1000, max=1000)#NOTICE min and max set by Søren
   #params.add( 'gwidth', value = gwidth,vary = False )
   params.add( 'gwidth', value = gwidth,vary = True )
   #params.add( 'const',  value = 0.0 )

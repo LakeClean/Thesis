@@ -3,30 +3,42 @@ import glob
 import sys
 path = '/home/lakeclean/Documents/speciale/target_analysis/'
 
-info_file = open('file_log.txt').read().split('\n')
+info_file = open('/home/lakeclean/Documents/speciale/order_file_log.txt').read().split('\n')
 
 IDs = []
 dates = []
 for line in info_file[1:-1]:
     line = line.split(',')
-    if line[0].strip() not in IDs:
+    if line[1].strip() == 'science':
         IDs.append(line[0].strip())
-    dates.append(line[3].strip())
+        dates.append(line[3].strip())
+    
+#if line[0].strip() not in IDs:
+#name = sys.argv[1:]
 
-name = sys.argv[1:]
+#if name[0] == 'all':
 
-if name[0] == 'all':
-    for ID in IDs:
-        dates = glob.glob(path+f'{ID}/*')
-        for date in dates:
-            data_files = glob.glob(date + '/data/*')
-            plots = glob.glob(date + '/plots/*')
-            
-            for file in data_files:
-                os.remove(file)
+done_IDs = []
+for ID in IDs:
+    if ID not in done_IDs:
+        os.mkdir(path + ID)
+        done_IDs.append(ID)
 
-            for plot in plots:
-                os.remove(plot)
+
+for ID, date in zip (IDs, dates):
+    try:
+        os.mkdir(path + ID + '/' + date)
+        os.mkdir(path + ID + '/' + date + '/data')
+        os.mkdir(path + ID + '/' + date + '/plots')
+    except:
+        print(ID,date)
+        pass
+                
+                #for file in data_files:
+                 #   os.remove(file)
+
+                #for plot in plots:
+                 #   os.remove(plot)
 
 '''
 

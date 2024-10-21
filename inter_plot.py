@@ -6,7 +6,6 @@ import pandas as pd
 
 
 
-
 #importting info:
 path = '/home/lakeclean/Documents/speciale/target_analysis/'
 def plot_bf(ID,date=None,bin_range=None):
@@ -24,7 +23,7 @@ def plot_bf(ID,date=None,bin_range=None):
 
     def sorter(x):
         '''
-        key for sorter
+        #key for sorter
         '''
         try:
             result = int(x[len(bf_path)+3:len(bf_path)+5])
@@ -93,7 +92,7 @@ def plot_ccf(ID,date=None,bin_range=None):
 
     def sorter(x):
         '''
-        key for sorter
+        #key for sorter
         '''
         try:
             result = int(x[len(ccf_path)+3:len(ccf_path)+5])
