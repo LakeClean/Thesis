@@ -53,7 +53,7 @@ def analyse_spectrum(file, template='MS',start_order=1,
                      rotbf_fit_fitsize=30,rotbf_fit_res=60000,rotbf_fit_smooth=2.0,
                      rotbf_fit_vsini=5.0,rotbf_fit_print_report=True,
                      
-                     use_SVD=False,SB_type=1,
+                     use_SVD=True,SB_type=1,
                      show_plots=True, save_plots=True, save_data = True,
                      show_bin_plots=False,save_bin_info=False): 
     '''
@@ -107,7 +107,7 @@ def analyse_spectrum(file, template='MS',start_order=1,
     epoch_name = header['TCSTGT'].strip(' ') #name of target
     epoch_date = header['DATE_OBS'].strip(' ')   #date of fits creation
     epoch_Vhelio = header['VHELIO'] # heliocentric velocity
-
+    print(epoch_name, epoch_date)
     
     if epoch_name in RGBs:
         tfl = tfl_RG
@@ -163,18 +163,19 @@ def analyse_spectrum(file, template='MS',start_order=1,
 
     epoch_rvs = [] #binned rvs for BF or ccf
     epoch_bf = [] #binned BF
+    epoch_model = [] # The fit to the bf
     epoch_smoothed_bf = [] #binned smoothed BF
 
     epoch_ccf = [] #binned BF
 
-    epoch_ampl1, epoch_gwidth = np.zeros(no_orders), np.zeros(no_orders)
-    epoch_vrad1, epoch_vsini1  = np.zeros(no_orders), np.zeros(no_orders)
-    epoch_limbd, epoch_const = np.zeros(no_orders), np.zeros(no_orders)
+    epoch_ampl1, epoch_gwidth = np.zeros(no_orders), np.zeros(no_orders) #parameters of fit to bf
+    epoch_vrad1, epoch_vsini1  = np.zeros(no_orders), np.zeros(no_orders)#parameters of fit to bf
+    epoch_limbd, epoch_const = np.zeros(no_orders), np.zeros(no_orders)#parameters of fit to bf
 
-    epoch_ampl2= np.zeros(no_orders)
-    epoch_vrad2, epoch_vsini2  = np.zeros(no_orders), np.zeros(no_orders)
+    epoch_ampl2 = np.zeros(no_orders)#parameters of fit to bf
+    epoch_vrad2, epoch_vsini2  = np.zeros(no_orders), np.zeros(no_orders)#parameters of fit to bf
 
-    slopes = np.zeros(no_orders)
+    slopes = np.zeros(no_orders) 
     bin_wls = np.zeros(no_orders)
 
     for i in np.arange(start_order,no_orders,1):
@@ -238,6 +239,8 @@ def analyse_spectrum(file, template='MS',start_order=1,
                 epoch_ampl1[i], epoch_gwidth[i] = fit.params['ampl1'].value, fit.params['gwidth'].value
                 epoch_vrad1[i], epoch_vsini1[i]  = fit.params['vrad1'].value, fit.params['vsini1'].value
                 epoch_limbd[i], epoch_const[i] = fit.params['limbd1'].value, fit.params['const'].value
+                epoch_vrad2[i], epoch_vsini2[i] = fit.params['vrad1'].value, fit.params['vsini1'].value
+                epoch_ampl2[i] = fit.params['ampl1'].value
                 
             elif SB_type == 2:
                 fit, model, bfgs = shazam.rotbf2_fit(rvs,bf, rotbf2_fit_fitsize,rotbf2_fit_res,
@@ -254,12 +257,13 @@ def analyse_spectrum(file, template='MS',start_order=1,
                 epoch_vrad2[i], epoch_vsini2[i] = fit.params['vrad2'].value, fit.params['vsini2'].value
                 epoch_limbd[i], epoch_const[i] = fit.params['limbd1'].value, fit.params['const'].value
                 epoch_gwidth[i] = fit.params['gwidth'].value
-
+            
             else:
                 print('The SB type was given wrong: Should be int 1 or 2')
                 
             
             epoch_smoothed_bf.append(bfgs)
+            epoch_model.append(model)
 
             '''
             if (rv<-500) or (rv> 500):
@@ -319,9 +323,9 @@ def analyse_spectrum(file, template='MS',start_order=1,
         if save_data: save_datas([epoch_vrad1, epoch_vrad2,epoch_ampl1, epoch_ampl2,
                                   epoch_vsini1, epoch_vsini2, epoch_gwidth, epoch_limbd,
                                   epoch_const],
-                                     ['epoch_vrad1, epoch_vrad2,epoch_ampl1, epoch_ampl2\
-                                  epoch_vsini1, epoch_vsini2, epoch_gwidth, epoch_limbd,\
-                                  epoch_const'],
+                                     ['epoch_vrad1', 'epoch_vrad2','epoch_ampl1', 'epoch_ampl2',
+                                  'epoch_vsini1', 'epoch_vsini2', 'epoch_gwidth', 'epoch_limbd',
+                                  'epoch_const'],
                                      f"bf_fit_params")
         # Plotting for every bin:
         if show_bin_plots:
@@ -377,11 +381,12 @@ def analyse_spectrum(file, template='MS',start_order=1,
         fig, ax = plt.subplots()
         x_label, y_label, title ='rvs [km/s]', 'broadening function', 'broadening function'
         k=0
-        for xs, ys,smoothed in zip(epoch_rvs,epoch_bf,epoch_smoothed_bf):
+        for xs, ys,smoothed,model in zip(epoch_rvs,epoch_bf,epoch_smoothed_bf,epoch_model):
             #ax.plot(xs,ys+k)
-            ax.plot(xs,smoothed+k)
+            ax.plot(xs,smoothed+k,label='smoothed bf')
+            ax.plot(xs,model,label='fit to smoothed bf')
             k+=0.1
-        
+        ax.legend()
         ax.set_xlabel(x_label)
         ax.set_ylabel(y_label)
         ax.set_ylim(0,no_orders*0.1)
@@ -416,10 +421,11 @@ def analyse_spectrum(file, template='MS',start_order=1,
     
     # Plotting radial velocities measured:
     fig, ax = plt.subplots()
-    x_label, y_label='order_wl', 'Radial Velocity [km/s]'
+    x_label, y_label='order_wl', 'Radial Velocity 1 [km/s]'
     title = 'radial velocity per order Uncorrected'
     xs, ys = bin_wls,epoch_vrad1
-    ax.scatter(xs,ys,label='rv')
+    ax.scatter(xs,ys,label='rv1')
+    ax.scatter(bin_wls,epoch_vrad2,label='rv2')
     ax.plot([xs[0],xs[-1]],[np.mean(ys),np.mean(ys)],label='mean',color='r')
     ax.plot([xs[0],xs[-1]],[epoch_Vhelio,epoch_Vhelio],label=f'V_helio={epoch_Vhelio}',color='g')
     ax.legend()
@@ -430,7 +436,7 @@ def analyse_spectrum(file, template='MS',start_order=1,
     if save_plots: fig.savefig(path+f"/plots/{plot_title.replace(' ','_')}.svg",
                                dpi='figure', format='svg')
     if show_plots: plt.show()
-    if save_data: save_datas([xs,ys],[x_label,y_label],plot_title.replace(' ','_'))
+    if save_data: save_datas([xs,epoch_vrad1,epoch_vrad2],[x_label,y_label,'Radial Velocity 1 [km/s]'],plot_title.replace(' ','_'))
     plt.close()
 
     '''
@@ -497,32 +503,41 @@ for IDline in IDlines[:-1]:
         
 
 
-
+k=0
 for file,ID,date in zip(files,IDs,dates):
     #analyse_spectrum(file,bin_size=200,use_SVD=,
     #                 show_bin_plots=False,show_plots=False)
-    if ID == 'KIC-9025370':
-        if date == '2024-05-10T02:08:34.331':
+    if ID == 'KIC9652971':
+        if date == '2024-09-17T23:56:38.532':
+            print(f'Spectrum: {k}/{len(files)}')
+            k+=1
+            start_order=30
+            show_bin_plots=True
+            save_data=False
+            save_plots=False
+            show_plots=True
+            rotbf_fit_print_report=True
+            
             if ID not in SB2IDs:
-                    analyse_spectrum(file,use_SVD=True,SB_type = 1, start_order=1,
-                             show_bin_plots=False,save_data=True,
-                             save_plots=False,
-                             rotbf_fit_print_report=False)
+                    analyse_spectrum(file,SB_type = 1, start_order=start_order,
+                             show_bin_plots=show_bin_plots,save_data=save_data,
+                             save_plots=save_plots,show_plots=show_plots,
+                             rotbf_fit_print_report=rotbf_fit_print_report)
             else:
                 for SB2_date,SB2_type,vguess1,vguess2 in zip(SB2_dates,SB2_types, vguess1s,vguess2s):
                     if SB2_date == date:
                         if SB2_type == '1':
-                            analyse_spectrum(file,use_SVD=True,SB_type = 1, start_order=1,
-                                     show_bin_plots=False,save_data=True,
-                                     save_plots=False,
-                                     rotbf_fit_print_report=False)
+                            analyse_spectrum(file,SB_type = 1, start_order=start_order,
+                                     show_bin_plots=show_bin_plots,save_data=save_data,
+                                     save_plots=save_plots,show_plots=show_plots,
+                                     rotbf_fit_print_report=rotbf_fit_print_report)
                                 
                         if SB2_type == '2':
-                            print(vguess1,vguess2)
-                            analyse_spectrum(file,use_SVD=True,SB_type = 2, start_order=30,
-                                     show_bin_plots=True,save_data=True,
-                                     save_plots=False,
-                                     rotbf_fit_print_report=False,
+                            print('Initial guesses: ', vguess1,vguess2)
+                            analyse_spectrum(file,SB_type = 2, start_order=start_order,
+                                     show_bin_plots=show_bin_plots,save_data=save_data,
+                                     save_plots=save_plots,show_plots=show_plots,
+                                     rotbf_fit_print_report=rotbf_fit_print_report,
                                      rotbf2_fit_vrad1=int(vguess1),
                                      rotbf2_fit_vrad2=int(vguess2))
 
