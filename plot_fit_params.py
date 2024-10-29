@@ -20,15 +20,33 @@ for line in lines[:-1]:
         all_vhelios.append(float(line[5].strip()))
     
 
-#ID = 'KIC-12317678'#'KIC-9025370'
-for ID in ['KIC9652971']:#all_IDs: #['KIC-12317678']:
-    print(ID)
+#ID = 'KIC-12317678'#'KIC-9025370' KIC-9693187 KIC9652971
+
+
+for ID in ['KIC-9693187']:#all_IDs: #['KIC-12317678']:
+    #print(ID)
     path = f'/home/lakeclean/Documents/speciale/target_analysis/'
     correction = len(path + ID) +1
     files = glob.glob(path + ID + '/*')
+    def sorter(x):
+        return Time(x[correction:]).mjd
+    files = sorted(files,key=sorter)
 
     rvs = np.zeros(shape= (len(files),4))
     mjds = np.zeros(len(files))
+    offset1s = np.zeros(shape= (len(files),91))
+    offset2s = np.zeros(shape= (len(files),91))
+
+    vrad1s = np.zeros(shape= (len(files),91))
+    vrad2s= np.zeros(shape= (len(files),91))
+    ampl1s= np.zeros(shape= (len(files),91))
+    ampl2s= np.zeros(shape= (len(files),91))
+    vsini1s= np.zeros(shape= (len(files),91))
+    vsini2s= np.zeros(shape= (len(files),91))
+    gwidths= np.zeros(shape= (len(files),91))
+    limbds= np.zeros(shape= (len(files),91))
+    consts= np.zeros(shape= (len(files),91))
+    
     for i, file in enumerate(files):
         date = file[correction:]
         mjds[i] = Time(date).mjd
@@ -36,16 +54,6 @@ for ID in ['KIC9652971']:#all_IDs: #['KIC-12317678']:
             if all_date == date:
                 v_helio = all_vhelio
 
-
-        vrad1 = []
-        vrad2= []
-        ampl1= []
-        ampl2= []
-        vsini1= []
-        vsini2= []
-        gwidth= []
-        limbd= []
-        const= []
         try:
             path =  f'{file}/data/bf_fit_params.txt'
             lines = open(path).read().split('\n')
@@ -54,89 +62,84 @@ for ID in ['KIC9652971']:#all_IDs: #['KIC-12317678']:
             continue
         
 
-        for line in lines[1:-1]:
+        for j,line in enumerate(lines[1:-1]):
             line  =line.split(',')
-            ampl1.append(float(line[2]))
-            ampl2.append(float(line[3]))
+            ampl1s[i,j] = float(line[2])
+            ampl2s[i,j] = float(line[3])
             #We choose the rad1 as the one with the highest amplitude
             if float(line[2]) < float(line[3]):
-                vrad1.append(float(line[0]) + v_helio)
-                vrad2.append(float(line[1]) + v_helio)
-                vsini1.append(float(line[4]))
-                vsini2.append(float(line[5]))
-                gwidth.append(float(line[6]))
-                limbd.append(float(line[7]))
-                const.append(float(line[8]))
+                vrad1s[i,j] =float(line[0]) + v_helio
+                vrad2s[i,j] = float(line[1]) + v_helio
+                vsini1s[i,j] = float(line[4])
+                vsini2s[i,j] = float(line[5])
+                gwidths[i,j] =float(line[6])
+                limbds[i,j] =float(line[7])
+                consts[i,j] =float(line[8])
             else:
-                vrad1.append(float(line[1]) + v_helio)
-                vrad2.append(float(line[0]) + v_helio)
-                vsini1.append(float(line[5]))
-                vsini2.append(float(line[4]))
-                gwidth.append(float(line[6]))
-                limbd.append(float(line[7]))
-                const.append(float(line[8]))
+                vrad1s[i,j] =float(line[1]) + v_helio
+                vrad2s[i,j] = float(line[0]) + v_helio
+                vsini1s[i,j] = float(line[5])
+                vsini2s[i,j] = float(line[4])
+                gwidths[i,j] =float(line[6])
+                limbds[i,j] =float(line[7])
+                consts[i,j] =float(line[8])
                 
 
-        
-        fig, ax = plt.subplots()
-        limits = [20,60]
-        ax.scatter(range(len(vrad1)), vrad1,label=f'{np.median(vrad1)}')
-        ax.scatter(range(len(vrad2)), vrad2,label=f'{np.std(vrad1)}')
+        limits = [20,60] #The region that looks best
 
-
+        #Fitting line to best region
         fit = fitting.LinearLSQFitter()
         line_init = models.Linear1D()
-        fitted_line = fit(line_init, range(len(vrad1[limits[0]:limits[1]])), vrad1[limits[0]:limits[1]])
+        fitted_line = fit(line_init, range(len(vrad1s[i][limits[0]:limits[1]])), vrad1s[i][limits[0]:limits[1]])
         slope = fitted_line.slope.value
         intercept = fitted_line.intercept.value
-        ax.plot(np.linspace(limits[0],limits[1],len(vrad1[limits[0]:limits[1]])),fitted_line(range(len(vrad1[limits[0]:limits[1]]))))
         
-        ax.legend()
         
-        #plt.show()
-        plt.close()
+        #rvs[i,0] = np.mean(vrad1s[i][limits[0]:limits[1]])
+        #rvs[i,1] = np.mean(vrad2s[i][limits[0]:limits[1]])
+        #rvs[i,2] = np.std(vrad1s[i][limits[0]:limits[1]])/np.sqrt(len(vrad1s[i][limits[0]:limits[1]]))
+        #rvs[i,3] = np.std(vrad2s[i][limits[0]:limits[1]])/np.sqrt(len(vrad1s[i][limits[0]:limits[1]]))
+
+        offset1s[i,:] = np.median(vrad1s[i][limits[0]:limits[1]]) - vrad1s[i]
+        offset2s[i,:] = np.median(vrad2s[i][limits[0]:limits[1]]) - vrad2s[i]
         
-        rvs[i,0] = np.mean(vrad1[limits[0]:limits[1]])
-        rvs[i,1] = np.mean(vrad2[limits[0]:limits[1]])
-        rvs[i,2] = np.std(vrad1[limits[0]:limits[1]])/np.sqrt(len(vrad1[limits[0]:limits[1]]))
-        rvs[i,3] = np.std(vrad2[limits[0]:limits[1]])/np.sqrt(len(vrad1[limits[0]:limits[1]]))
-        
+
+
+    
+    offset1s_median = np.median(offset1s,axis=0)
+    offset2s_median = np.median(offset2s,axis=0)
+
+    fig, ax  = plt.subplots()
+    ax.scatter(range(len(vrad1s[1])),vrad1s[1])
+    ax.scatter(range(len(vrad1s[1])),vrad1s[1]+offset1s_median)
+    plt.show()
+    
         
 
 
     fig, ax  = plt.subplots()
 
-
-
     ax.scatter(mjds,rvs[:,0],color='r')
-    #ax.errorbar(mjds,rvs[:,0],rvs[:,2],fmt='o',capsize=2,color='r')
+    ax.errorbar(mjds,rvs[:,0],rvs[:,2],fmt='o',capsize=2,color='r')
     ax.scatter(mjds,rvs[:,1],color='b')
-    #ax.errorbar(mjds,rvs[:,1],rvs[:,3],fmt='o',capsize=2,color='b')
+    ax.errorbar(mjds,rvs[:,1],rvs[:,3],fmt='o',capsize=2,color='b')
+    ax.set_xlabel(f'time [mjd]')
+    ax.set_ylabel('RV [km/s]')
 
-    #ax.scatter(np.array(mjds)+103,rv1s,color='g')
-    #ax.errorbar(mjds,rvs[:,0],rvs[:,2],fmt='o',capsize=2,color='r')
-    #ax.scatter(np.array(mjds)+103,rv2s,color='cyan')
-    #ax.errorbar(mjds,rvs[:,1],rvs[:,3],fmt='o',capsize=2,color='b')
-
+#plt.show()
 
 
 #Sorting points:
 
-def sorter1(x):
-    index = np.where(x == rvs[:,0])[0]
-    return mjds[index]
-def sorter2(x):
-    index = np.where(x == rvs[:,1])[0]
-    return mjds[index]
 
-rv1s = sorted(rvs[:,0],key=sorter1)
-rv2s = sorted(rvs[:,1],key=sorter2)
-mjds = sorted(mjds)
+rv1s = rvs[:,0]
+rv2s = rvs[:,1]
+
+
 
 
 
     
-
 def guess_params(ts, rv, period_guess):
     ################  Guessing parameters:  #######################
 
@@ -242,10 +245,10 @@ print(fit.params)
 proxy_time = np.linspace(min(mjds),max(mjds),1000)
 
 fit_rvs = sb.radial_velocity(proxy_time,k=k1,e=e,w=w,p=p,t0=t0,v0=v0)
-#ax.plot(proxy_time,-fit_rvs)
+ax.plot(proxy_time,-fit_rvs)
 
 fit_rvs = sb.radial_velocity(proxy_time,k=k2,e=e,w=w,p=p,t0=t0,v0=v0)
-#ax.plot(proxy_time,fit_rvs)
+ax.plot(proxy_time,fit_rvs)
 
 plt.show()
 

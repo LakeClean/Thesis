@@ -5,7 +5,7 @@ import astropy.io.fits as pyfits
 import glob
 #import pickle #For saving figures as matplotlib figures
 from astropy.modeling import models, fitting
-
+from time import time
 
 #import template
 template_dir = '/home/lakeclean/Documents/speciale/templates/ardata.fits'
@@ -39,19 +39,19 @@ def analyse_spectrum(file, template='MS',start_order=1,
                      
                      crm_iters = 1, crm_q = [99.0,99.9,99.99],
                      
-                     resample_dv=1.0, resample_edge=0.0,
+                     resample_dv=0.5, resample_edge=0.0,
                      
                      getCCF_rvr=401, getCCF_ccf_mode='full',
                      
-                     getBF_rvr=401, getBF_dv=1.0,
+                     getBF_rvr=401, getBF_dv=0.5,
                      
                      rotbf2_fit_fitsize=30,rotbf2_fit_res=60000,rotbf2_fit_smooth=2.0,
                      rotbf2_fit_vsini1=10.0,rotbf2_fit_vsini2=5.0,rotbf2_fit_vrad1=-30.0,
                      rotbf2_fit_vrad2=10.0,rotbf2_fit_ampl1=0.5,rotbf2_fit_ampl2=0.5,
                      rotbf2_fit_print_report=False,rotbf2_fit_smoothing=True,
                      
-                     rotbf_fit_fitsize=30,rotbf_fit_res=60000,rotbf_fit_smooth=2.0,
-                     rotbf_fit_vsini=5.0,rotbf_fit_print_report=True,
+                     rotbf_fit_fitsize=30,rotbf_fit_res=60000,rotbf_fit_smooth=3.0,
+                     rotbf_fit_vsini=10.0,rotbf_fit_print_report=True,
                      
                      use_SVD=True,SB_type=1,
                      show_plots=True, save_plots=True, save_data = True,
@@ -138,6 +138,7 @@ def analyse_spectrum(file, template='MS',start_order=1,
     
         
     #Raw spectrum is plotted
+    '''
     fig, ax = plt.subplots()
     for order in np.arange(3,no_orders,1):
         
@@ -148,11 +149,15 @@ def analyse_spectrum(file, template='MS',start_order=1,
         ax.set_ylabel(y_label)
         plot_title = title #+ ' ' + epoch_name + ' ' + epoch_date
         ax.set_title(plot_title+ ' ' + epoch_name + ' ' + epoch_date)
+    
     if save_plots: fig.savefig(path+f"/plots/{plot_title.replace(' ','_')}.svg",
                                    dpi='figure', format='svg')
+    
     if save_data: save_datas([xs,ys],[x_label,y_label],plot_title.replace(' ','_'))
     if show_plots: plt.show()
     plt.close()
+    '''
+    
 
     epoch_nwls = [] #binned norm wl 
     epoch_nfls = [] #binned norm fl
@@ -319,14 +324,7 @@ def analyse_spectrum(file, template='MS',start_order=1,
             epoch_rv[i] = rv + header['VHELIO']
             epoch_vsini[i] = vsini
         '''
-
-        if save_data: save_datas([epoch_vrad1, epoch_vrad2,epoch_ampl1, epoch_ampl2,
-                                  epoch_vsini1, epoch_vsini2, epoch_gwidth, epoch_limbd,
-                                  epoch_const],
-                                     ['epoch_vrad1', 'epoch_vrad2','epoch_ampl1', 'epoch_ampl2',
-                                  'epoch_vsini1', 'epoch_vsini2', 'epoch_gwidth', 'epoch_limbd',
-                                  'epoch_const'],
-                                     f"bf_fit_params")
+        
         # Plotting for every bin:
         if show_bin_plots:
             fig, ax = plt.subplots(3,1,figsize=(10,8))
@@ -375,6 +373,14 @@ def analyse_spectrum(file, template='MS',start_order=1,
             
             plt.show()
             plt.close()
+            
+    if save_data: save_datas([epoch_vrad1, epoch_vrad2,epoch_ampl1, epoch_ampl2,
+                                  epoch_vsini1, epoch_vsini2, epoch_gwidth, epoch_limbd,
+                                  epoch_const],
+                                     ['epoch_vrad1', 'epoch_vrad2','epoch_ampl1', 'epoch_ampl2',
+                                  'epoch_vsini1', 'epoch_vsini2', 'epoch_gwidth', 'epoch_limbd',
+                                  'epoch_const'],
+                                     f"bf_fit_params")
 
     # Plotting bfs or ccfs together:
     if use_SVD:
@@ -436,7 +442,10 @@ def analyse_spectrum(file, template='MS',start_order=1,
     if save_plots: fig.savefig(path+f"/plots/{plot_title.replace(' ','_')}.svg",
                                dpi='figure', format='svg')
     if show_plots: plt.show()
-    if save_data: save_datas([xs,epoch_vrad1,epoch_vrad2],[x_label,y_label,'Radial Velocity 1 [km/s]'],plot_title.replace(' ','_'))
+    plt.close()
+    '''
+    
+    if save_data: save_datas([bin_wls,epoch_vrad1,epoch_vrad2],[x_label,y_label,'Radial Velocity 1 [km/s]'],plot_title.replace(' ','_'))
     plt.close()
 
     '''
@@ -457,7 +466,7 @@ def analyse_spectrum(file, template='MS',start_order=1,
     if show_plots: plt.show()
     if save_data: save_datas([xs,ys],[x_label,y_label],plot_title.replace(' ','_'))
     plt.close()
-    '''
+    
     
 
     return epoch_vrad1, epoch_vsini1
@@ -503,19 +512,24 @@ for IDline in IDlines[:-1]:
         
 
 
+
 k=0
-for file,ID,date in zip(files,IDs,dates):
+time1 = time()
+for file,ID,date in zip(files[0:],IDs[0:],dates[0:]):
+    
+    
     #analyse_spectrum(file,bin_size=200,use_SVD=,
     #                 show_bin_plots=False,show_plots=False)
     if ID == 'KIC9652971':
-        if date == '2024-09-17T23:56:38.532':
-            print(f'Spectrum: {k}/{len(files)}')
+        if date == '2024-07-13T00:51:20.093':
+            print(f'Spectrum: {k}/{len(files)}, Time: {time()-time1}s')
+            time1 = time()
             k+=1
             start_order=30
             show_bin_plots=True
             save_data=False
             save_plots=False
-            show_plots=True
+            show_plots=False
             rotbf_fit_print_report=True
             
             if ID not in SB2IDs:
