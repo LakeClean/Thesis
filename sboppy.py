@@ -86,18 +86,27 @@ def fit_rv_model_SB2(parameters, hjd, rv_measurements, unc=None):
         v0_1 = parameters['v0_1'].value
         v0_2 = parameters['v0_1'].value
 
-    res1 = radial_velocity(hjd, k=k1, e=e, w=w, p=p, t0=t0, v0=v0_1) - rv_measurements[:, 0]
-    res2 = radial_velocity(hjd, k=k2, e=e, w=w2, p=p, t0=t0, v0=v0_2) - rv_measurements[:, 1]
+    res1 = radial_velocity(hjd[0], k=k1, e=e, w=w, p=p, t0=t0, v0=v0_1) - rv_measurements[0]
+    res2 = radial_velocity(hjd[1], k=k2, e=e, w=w2, p=p, t0=t0, v0=v0_2) - rv_measurements[1]
     # plt.plot(hjd, radial_velocity(hjd, k=k1, e=e, omega=w, p=p, t0=t0, v0=v0))
     # plt.plot(hjd, radial_velocity(hjd, k=k2, e=e, omega=omega2, p=p, t0=t0, v0=v0))
 
     # plt.plot(hjd, rv_measurements[:, 0], 'k+')
     # plt.plot(hjd, rv_measurements[:, 1], 'r+')
     # plt.show()
+    '''
     if unc is None:
         res = np.append(res1, res2)
     else:
         res = np.append(res1 / rv_measurements[:, 2], res2 / rv_measurements[:, 3])
+    '''
+    
+    if len(rv_measurements)==2: #Added by Søren
+        res = np.append(res1, res2)
+    elif len(rv_measurements)==4:#Added by Søren
+        res = np.append(res1 / rv_measurements[2], res2 / rv_measurements[3])
+    else:
+        print('The rv array has the wrong shape')
 
     return res
 

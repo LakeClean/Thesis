@@ -6,6 +6,8 @@ import glob
 #import pickle #For saving figures as matplotlib figures
 from astropy.modeling import models, fitting
 from time import time
+from scipy.signal import find_peaks
+from astropy.time import Time
 
 #import template
 template_dir = '/home/lakeclean/Documents/speciale/templates/ardata.fits'
@@ -32,25 +34,25 @@ for line in lines:
             RGBs.append(line[0])
 
 
-def analyse_spectrum(file, template='MS',start_order=1,
+def analyse_spectrum(file, template='MS',start_order=1, append_to_log=False,
                      
                      normalize_bl = np.array([]),normalize_poly=1,normalize_gauss=True,
                      normalize_lower=0.5,normalize_upper=1.5,
                      
                      crm_iters = 1, crm_q = [99.0,99.9,99.99],
                      
-                     resample_dv=0.5, resample_edge=0.0,
+                     resample_dv=1.0, resample_edge=0.0,
                      
                      getCCF_rvr=401, getCCF_ccf_mode='full',
                      
-                     getBF_rvr=401, getBF_dv=0.5,
+                     getBF_rvr=401, getBF_dv=1.0,
                      
-                     rotbf2_fit_fitsize=30,rotbf2_fit_res=60000,rotbf2_fit_smooth=2.0,
+                     rotbf2_fit_fitsize=30,rotbf2_fit_res=60000,rotbf2_fit_smooth=2,
                      rotbf2_fit_vsini1=10.0,rotbf2_fit_vsini2=5.0,rotbf2_fit_vrad1=-30.0,
-                     rotbf2_fit_vrad2=10.0,rotbf2_fit_ampl1=0.5,rotbf2_fit_ampl2=0.5,
+                     rotbf2_fit_vrad2=10.0,rotbf2_fit_ampl1=0.05,rotbf2_fit_ampl2=0.05,
                      rotbf2_fit_print_report=False,rotbf2_fit_smoothing=True,
                      
-                     rotbf_fit_fitsize=30,rotbf_fit_res=60000,rotbf_fit_smooth=3.0,
+                     rotbf_fit_fitsize=30,rotbf_fit_res=60000,rotbf_fit_smooth=2.0,
                      rotbf_fit_vsini=10.0,rotbf_fit_print_report=True,
                      
                      use_SVD=True,SB_type=1,
@@ -62,17 +64,18 @@ def analyse_spectrum(file, template='MS',start_order=1,
     It then stores the analysis of the spectra in existing directory.
     
     :params:
-        file      :str, path of the fits file
-        start_wl  :int, starting wavelength [Ångstrom]
-        end_wl    :int, ending wavelength [Ångstrom]
-        template  :str, either 'MS' or 'RG'
-        bin_size  :int, size of wavelength bin
-        SB_type   :int, either 1 or 2 works atm. when use_SVD=True
+        file          :str, path of the fits file
+        start_wl      :int, starting wavelength [Ångstrom]
+        end_wl        :int, ending wavelength [Ångstrom]
+        template      :str, either 'MS' or 'RG'
+        bin_size      :int, size of wavelength bin
+        SB_type       :int, either 1 or 2 works atm. when use_SVD=True
+        append_to_log :bool, append the given parameters to a log
 
-        rvr       : integer, range for RVs in km/s
-        fitsize   : float, fitsize in km/s - only fit `fitsize` part of the rotational profile
-        res       : float, resolution of spectrograph - affects width of peak
-        smooth    : float, smoothing factor - sigma in Gaussian smoothing
+        rvr           : integer, range for RVs in km/s
+        fitsize       : float, fitsize in km/s - only fit `fitsize` part of the rotational profile
+        res           : float, resolution of spectrograph - affects width of peak
+        smooth        : float, smoothing factor - sigma in Gaussian smoothing
         
     
     :returns:
@@ -117,6 +120,30 @@ def analyse_spectrum(file, template='MS',start_order=1,
     path = '/home/lakeclean/Documents/speciale/target_analysis/' + epoch_name +'/' + epoch_date
 
     #######################################################################
+
+    if append_to_log:
+        f = open('analyse_log.txt').read()
+        f += f'{start_order}, {append_to_log}, {normalize_bl}, {normalize_poly}, {normalize_gauss},'
+        f += f'{normalize_lower}, {normalize_upper}, {crm_iters}, {crm_q}, {resample_dv}, {resample_edge},'
+        f += f' {getCCF_rvr}, {getCCF_ccf_mode}, {getBF_rvr}, {getBF_dv},'
+        f += f'{rotbf2_fit_fitsize},{rotbf2_fit_res},{rotbf2_fit_smooth},'
+        f += f'{rotbf2_fit_vsini1},{rotbf2_fit_vsini2},{rotbf2_fit_vrad1},'
+        f += f'{rotbf2_fit_vrad2},{rotbf2_fit_ampl1},{rotbf2_fit_ampl2},'
+        f += f'{rotbf2_fit_print_report},{rotbf2_fit_smoothing},'
+        f += f'{rotbf_fit_fitsize},{rotbf_fit_res},{rotbf_fit_smooth},'
+        f += f'{rotbf_fit_vsini},{rotbf_fit_print_report},'
+        f += f'{use_SVD},{SB_type},{show_plots}, {save_plots}, {save_data},'
+        f += f'{show_bin_plots},{save_bin_info}'
+        lines = f
+        f.close()
+        f.open('analyse_log.txt','w')
+        f.write(lines)
+        f.close()
+        
+
+    
+
+    #######################################################################
     def save_datas(datas,labels,title):
         f = open(path + f"/data/{title}.txt",'w')
         result1 = ''
@@ -138,7 +165,7 @@ def analyse_spectrum(file, template='MS',start_order=1,
     
         
     #Raw spectrum is plotted
-    '''
+    
     fig, ax = plt.subplots()
     for order in np.arange(3,no_orders,1):
         
@@ -156,7 +183,7 @@ def analyse_spectrum(file, template='MS',start_order=1,
     if save_data: save_datas([xs,ys],[x_label,y_label],plot_title.replace(' ','_'))
     if show_plots: plt.show()
     plt.close()
-    '''
+    
     
 
     epoch_nwls = [] #binned norm wl 
@@ -235,6 +262,7 @@ def analyse_spectrum(file, template='MS',start_order=1,
             epoch_rvs.append(rvs)
             epoch_bf.append(bf)
 
+            #Fitting bf:
             if SB_type == 1:
                 fit, model, bfgs = shazam.rotbf_fit(rvs,bf,rotbf_fit_fitsize,rotbf_fit_res,
                                                     rotbf_fit_smooth,rotbf_fit_vsini,
@@ -270,60 +298,11 @@ def analyse_spectrum(file, template='MS',start_order=1,
             epoch_smoothed_bf.append(bfgs)
             epoch_model.append(model)
 
-            '''
-            if (rv<-500) or (rv> 500):
-                epoch_rv1[i] = 0
-            else:
-                epoch_rv1[i] = rv + header['VHELIO']
-                
-            epoch_vsini[i] = vsini
-            '''
-
             
             if save_data: save_datas([rvs,bf,bfgs,model],
                                      ['wavelength [km/s]', 'broadening function',
                                       'smoothed_bf', 'Fitted model'],
                                      f"order_{i}_broadening_function")
-
-
-        '''
-            
-        #If we want approximate BF from cross correlation
-        else:
-            #cross correlate
-            rvs, ccf = shazam.getCCF(rf_fl,rf_tl,getCCF_rvr, getCCF_ccf_mode)
-            epoch_rvs.append(rvs)
-            epoch_ccf.append(ccf)
-            #rvs_test, fit = shazam.getfit_CCF(rvs,ccf) #Showing the fit to the CCF
-
-            if SB_type == 1:
-                fit, model, bfgs = shazam.rotbf_fit(rvs,ccf,rotbf_fit_fitsize,rotbf_fit_res,
-                                                    rotbf_fit_smooth,rotbf_fit_vsini,
-                                                    rotbf_fit_print_report)
-                rv, vsini = fit.params['vrad1'].value, fit.params['vsini1'].value
-                
-            elif SB_type == 2:
-                fit, model, bfgs = shazam.rotbf2_fit(rvs,ccf,rotbf2_fit_fitsize,rotbf2_fit_res,
-                                                     rotbf2_fit_smooth, rotbf2_fit_vsini1,
-                                                     rotbf2_fit_vsini2,rotbf2_fit_vrad1,
-                                                     rotbf2_fit_vrad2,rotbf2_fit_ampl1,
-                                                     rotbf2_fit_ampl2,rotbf2_fit_print_report,
-                                                     rotbf2_fit_smoothing)
-                rv, vsini = fit.params['vrad1'].value, fit.params['vsini1'].value
-
-            else:
-                print('The SB type was given wrong: Should be int 1 or 2')
-
-            if save_data: save_datas([rvs,ccf,model],
-                                     ['wavelength [km/s]', 'cross correlation','fit to ccf'],
-                                     f"bin_{i}_size_{bin_size}_cross_correlation") # model should be changed maybe
-
-            #get rv:
-            rv, vsini = shazam.getRV(rvs,ccf)
-            
-            epoch_rv[i] = rv + header['VHELIO']
-            epoch_vsini[i] = vsini
-        '''
         
         # Plotting for every bin:
         if show_bin_plots:
@@ -352,25 +331,26 @@ def analyse_spectrum(file, template='MS',start_order=1,
             
             fig, ax = plt.subplots(figsize=(8,3))
             fig.suptitle(f'Bin #{i} ' + epoch_name + ' ' + epoch_date)
-            #broadening/cross correlation functions:
-            if use_SVD:
-                ax.plot(rvs,bf,label='Broadening Function')
-                ax.plot(rvs,bfgs,label='Smoothed broadening Function')
-                ax.plot(rvs,model,label='Fit to BF')
-                ax.set_xlabel('radial velocity [km/s]')
-                ax.set_ylabel('Broadening Function')
-                ax.legend()
-            else:
-                ax.plot(rvs,ccf,label='Cross correlation')
-                ax.plot(rvs,bfgs,label='Smoothed')
-                ax.set_xlabel('radial velocity [km/s]')
-                ax.set_ylabel('Cross correlation')
-                rvs_test, fit = shazam.getfit_CCF(rvs,ccf,SB_type=SB_type) #Showing the fit to the CCF
-                ax.plot(rvs,fit,label='gaussian fit')
-                ax.plot(rvs,model,label='lmfit')
-                ax.legend()
-
             
+            #broadening/cross correlation functions:
+            ax.plot(rvs,bf,label='Broadening Function')
+            ax.plot(rvs,bfgs,label='Smoothed broadening Function')
+            ax.plot(rvs,model,label='Fit to BF')
+            ax.set_xlabel('radial velocity [km/s]')
+            ax.set_ylabel('Broadening Function')
+
+
+            if epoch_ampl1[i] < epoch_ampl2[i]:
+                print('here')
+                ax.scatter(epoch_vrad1[i],0,color='b',label=f'{epoch_ampl1[i]}')
+                ax.scatter(epoch_vrad2[i],0,color='r',label=f'{epoch_ampl2[i]}')
+                
+            if epoch_ampl1[i] > epoch_ampl2[i]:
+                print('here')
+                ax.scatter(epoch_vrad1[i],0,color='r',label=f'{epoch_ampl1[i]}')
+                ax.scatter(epoch_vrad2[i],0,color='b',label=f'{epoch_ampl2[i]}')
+                
+            ax.legend()
             plt.show()
             plt.close()
             
@@ -501,6 +481,7 @@ for IDline in IDlines[:-1]:
     if IDline.split(',')[0][11:].strip(' ') in SB2IDs:
         for line in IDline.split('\n')[2:-1]:
             line = line.split(',')
+
             if line[2].split('/')[0].strip(' ') == 'NaN':
                 continue
             SB2_IDs.append(IDline.split(',')[0][11:].strip(' '))
@@ -520,23 +501,25 @@ for file,ID,date in zip(files[0:],IDs[0:],dates[0:]):
     
     #analyse_spectrum(file,bin_size=200,use_SVD=,
     #                 show_bin_plots=False,show_plots=False)
-    if ID == 'KIC9652971':
-        if date == '2024-07-13T00:51:20.093':
+    #if ID == 'KIC-4914923':
+        if date == '2024-07-13T21:53:23.281':
+        #if Time(date).jd > 2460588.404183426:
             print(f'Spectrum: {k}/{len(files)}, Time: {time()-time1}s')
             time1 = time()
             k+=1
-            start_order=30
+            start_order=35
             show_bin_plots=True
             save_data=False
             save_plots=False
             show_plots=False
-            rotbf_fit_print_report=True
+            rotbf_fit_print_report=False
             
             if ID not in SB2IDs:
                     analyse_spectrum(file,SB_type = 1, start_order=start_order,
                              show_bin_plots=show_bin_plots,save_data=save_data,
                              save_plots=save_plots,show_plots=show_plots,
                              rotbf_fit_print_report=rotbf_fit_print_report)
+
             else:
                 for SB2_date,SB2_type,vguess1,vguess2 in zip(SB2_dates,SB2_types, vguess1s,vguess2s):
                     if SB2_date == date:
@@ -544,16 +527,16 @@ for file,ID,date in zip(files[0:],IDs[0:],dates[0:]):
                             analyse_spectrum(file,SB_type = 1, start_order=start_order,
                                      show_bin_plots=show_bin_plots,save_data=save_data,
                                      save_plots=save_plots,show_plots=show_plots,
-                                     rotbf_fit_print_report=rotbf_fit_print_report)
+                                     rotbf2_fit_print_report=rotbf_fit_print_report)
                                 
                         if SB2_type == '2':
                             print('Initial guesses: ', vguess1,vguess2)
                             analyse_spectrum(file,SB_type = 2, start_order=start_order,
                                      show_bin_plots=show_bin_plots,save_data=save_data,
                                      save_plots=save_plots,show_plots=show_plots,
-                                     rotbf_fit_print_report=rotbf_fit_print_report,
-                                     rotbf2_fit_vrad1=int(vguess1),
-                                     rotbf2_fit_vrad2=int(vguess2))
+                                     rotbf2_fit_print_report=rotbf_fit_print_report,
+                                     rotbf2_fit_vrad1=float(vguess1),
+                                     rotbf2_fit_vrad2=float(vguess2))
 
                             
 

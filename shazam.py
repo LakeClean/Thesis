@@ -654,7 +654,7 @@ def rotbf2_fit(vel,bf,fitsize,res=60000,smooth=2.0,vsini1=5.0,vsini2=5.0,vrad1=0
   limbd, const         = fit.params['limbd1'].value, fit.params['const'].value
 
   model = rotbf2_func( vel,ampl1,vrad1,vsini1,ampl2,vrad2,vsini2,gwidth,const,limbd )
-
+  
   return fit, model, bfgs
 
 

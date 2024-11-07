@@ -10,28 +10,32 @@ dates = []
 for line in info_file[1:-1]:
     line = line.split(',')
     if line[1].strip() == 'science':
-        IDs.append(line[0].strip())
-        dates.append(line[3].strip())
-    
+        IDs.append(line[0].strip(' '))
+        dates.append(line[3].strip(' '))
 #if line[0].strip() not in IDs:
 #name = sys.argv[1:]
 
 #if name[0] == 'all':
-
+'''
 done_IDs = []
 for ID in IDs:
     if ID not in done_IDs:
         os.mkdir(path + ID)
         done_IDs.append(ID)
+'''
 
+
+added = []
+old = []
 
 for ID, date in zip (IDs, dates):
     try:
         os.mkdir(path + ID + '/' + date)
         os.mkdir(path + ID + '/' + date + '/data')
         os.mkdir(path + ID + '/' + date + '/plots')
+        added.append([ID,date])
     except:
-        print(ID,date)
+        old.append([ID,date])
         pass
                 
                 #for file in data_files:
@@ -39,6 +43,13 @@ for ID, date in zip (IDs, dates):
 
                 #for plot in plots:
                  #   os.remove(plot)
+print('These were added')
+for i in added:
+    print(i[0],i[1])
+
+print('These already existed')
+for i in old:
+    print(i[0],i[1])
 
 '''
 

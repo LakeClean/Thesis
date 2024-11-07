@@ -48,14 +48,10 @@ for file in files:
         os.rename(file,new_name)
 
     else:
-        
         os.mkdir(final_dir + date_begin)
         new_name = final_dir + date_begin + file[len(temporary_dir):]
         os.rename(file,new_name)
         
-        
-    
-     
 
 
 files = glob.glob(temporary_dir + '/*')
