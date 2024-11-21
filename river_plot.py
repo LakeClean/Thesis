@@ -18,7 +18,7 @@ Sricpt for constructing "river plot" of the movement of the stars
 '''
 
 path = '/home/lakeclean/Documents/speciale/target_analysis/'
-ID = 'KIC-12317678'
+ID = 'KIC9652971'
 
 
 #We construct a list of the 30th order for all the times of the star
@@ -62,7 +62,7 @@ dates = np.array(dates) - mjd_zero
 
 
 
-'''
+
 fig, ax = plt.subplots()
 offset = min(dates)
 for i in range(len(dates)):
@@ -70,9 +70,9 @@ for i in range(len(dates)):
     ax.plot(rvs[:,i],smoothed[i,:] + offset)
 
 plt.show()
-'''
-#Only for #KIC-123...
 
+#Only for #KIC-123...
+'''
 fig, ax = plt.subplots()
 offset = min(dates)
 
@@ -101,6 +101,7 @@ for IDline in IDlines[:-1]:
 
               
 for i,SB_type in enumerate(SB_types):
+    print(dates[i])
     
     offset = dates[i]*0.01
     ax.plot(rvs[:,i],smoothed[i,:] + offset)
@@ -116,7 +117,7 @@ for i,SB_type in enumerate(SB_types):
     
     #ax.plot(rvs[:,i],bfgs + offset)
     ax.plot(rvs[:,i],model + offset)
-
+'''
 
 
 '''

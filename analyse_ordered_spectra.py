@@ -47,12 +47,12 @@ def analyse_spectrum(file, template='MS',start_order=1, append_to_log=False,
                      
                      getBF_rvr=401, getBF_dv=1.0,
                      
-                     rotbf2_fit_fitsize=30,rotbf2_fit_res=60000,rotbf2_fit_smooth=2,
+                     rotbf2_fit_fitsize=30,rotbf2_fit_res=67000,rotbf2_fit_smooth=2,
                      rotbf2_fit_vsini1=10.0,rotbf2_fit_vsini2=5.0,rotbf2_fit_vrad1=-30.0,
                      rotbf2_fit_vrad2=10.0,rotbf2_fit_ampl1=0.05,rotbf2_fit_ampl2=0.05,
                      rotbf2_fit_print_report=False,rotbf2_fit_smoothing=True,
                      
-                     rotbf_fit_fitsize=30,rotbf_fit_res=60000,rotbf_fit_smooth=2.0,
+                     rotbf_fit_fitsize=30,rotbf_fit_res=67000,rotbf_fit_smooth=2.0,
                      rotbf_fit_vsini=10.0,rotbf_fit_print_report=True,
                      
                      use_SVD=True,SB_type=1,
@@ -274,6 +274,7 @@ def analyse_spectrum(file, template='MS',start_order=1, append_to_log=False,
                 epoch_limbd[i], epoch_const[i] = fit.params['limbd1'].value, fit.params['const'].value
                 epoch_vrad2[i], epoch_vsini2[i] = fit.params['vrad1'].value, fit.params['vsini1'].value
                 epoch_ampl2[i] = fit.params['ampl1'].value
+                print(epoch_vsini1[i],epoch_gwidth[i])
                 
             elif SB_type == 2:
                 fit, model, bfgs = shazam.rotbf2_fit(rvs,bf, rotbf2_fit_fitsize,rotbf2_fit_res,
@@ -341,12 +342,10 @@ def analyse_spectrum(file, template='MS',start_order=1, append_to_log=False,
 
 
             if epoch_ampl1[i] < epoch_ampl2[i]:
-                print('here')
                 ax.scatter(epoch_vrad1[i],0,color='b',label=f'{epoch_ampl1[i]}')
                 ax.scatter(epoch_vrad2[i],0,color='r',label=f'{epoch_ampl2[i]}')
                 
             if epoch_ampl1[i] > epoch_ampl2[i]:
-                print('here')
                 ax.scatter(epoch_vrad1[i],0,color='r',label=f'{epoch_ampl1[i]}')
                 ax.scatter(epoch_vrad2[i],0,color='b',label=f'{epoch_ampl2[i]}')
                 
@@ -501,9 +500,9 @@ for file,ID,date in zip(files[0:],IDs[0:],dates[0:]):
     
     #analyse_spectrum(file,bin_size=200,use_SVD=,
     #                 show_bin_plots=False,show_plots=False)
-    #if ID == 'KIC-4914923':
-        if date == '2024-07-13T21:53:23.281':
-        #if Time(date).jd > 2460588.404183426:
+    if ID == 'KIC-4914923':
+        #if date == '2024-04-10T20:16:04.917':
+        #if Time(date).jd > 2460618.4256590856:
             print(f'Spectrum: {k}/{len(files)}, Time: {time()-time1}s')
             time1 = time()
             k+=1
@@ -511,7 +510,7 @@ for file,ID,date in zip(files[0:],IDs[0:],dates[0:]):
             show_bin_plots=True
             save_data=False
             save_plots=False
-            show_plots=False
+            show_plots=True
             rotbf_fit_print_report=False
             
             if ID not in SB2IDs:

@@ -1,6 +1,6 @@
 import glob
 import pandas as pd
-
+import make_table_of_target_info as mt
 names = []
 
 lines = open('/home/lakeclean/Documents/speciale/order_file_log.txt').read().split('\n')
@@ -89,6 +89,10 @@ for target in targets[:-1]: #not including the last & since nothing after
         new_lines += line +'\n'
 
     new_lines += '&'
+
+    mt.add_value(nr_obs,'N_spec',target_ID)
+
+    
 
 f  =open('/home/lakeclean/Documents/speciale/spectra_log_h_readable.txt','w')
 f.write(new_lines)

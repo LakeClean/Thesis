@@ -12,6 +12,7 @@ for line in info_file[1:-1]:
     if line[1].strip() == 'science':
         IDs.append(line[0].strip(' '))
         dates.append(line[3].strip(' '))
+        
 #if line[0].strip() not in IDs:
 #name = sys.argv[1:]
 

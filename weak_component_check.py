@@ -29,6 +29,7 @@ twl = template_data['wavelength']
 #2024-06-08T04:23:40.113      #8
 #2024-09-01T21:57:52.339      #18
 #2024-09-12T00:49:10.250      #19
+dates = ['2024-05-26T22:58:27.122']
 dates = ['2024-05-26T22:58:27.122','2024-09-01T21:57:52.339']
 dates = ['2024-05-26T22:58:27.122','2024-09-12T00:49:10.250']
 dates = ['2024-05-26T22:58:27.122','2024-06-08T04:23:40.113',
@@ -112,67 +113,81 @@ save_plots=True
 save_data = True
 show_bin_plots=False
 save_bin_info=False
-    
-    
+
+ends = 100   
 
 start_order = 35
 end_order = 60
 summed_bf = np.zeros(401)
+
+                   
+mean_of_spectra = np.zeros(2062)
+
+
 for i in np.arange(start_order,end_order,1):
+
     #Pick out correct wl range
     wl, fl = shazam.getFIES(datas[0],order=i)
+    
+
+    #cutting of the ends:
+    o_wl, fl = wl[ends:-ends], fl[ends:-ends]
+    
+    wl = np.linspace(o_wl[0],o_wl[-1],len(o_wl)*10)
+    fl = np.interp(wl,o_wl,fl)
         
     #normalize
     nwl, nfl = shazam.normalize(wl,fl, normalize_bl,
                                     normalize_poly,normalize_gauss,
                                     normalize_lower,normalize_upper)
 
-    nfl = nfl / np.median(nfl[np.where(np.percentile(nfl,95)<nfl)[0]])#The flux of the normalized flux that is above 95% percentile
-        
 
-    #Remove cosmic rays
-    nwl, nfl = shazam.crm(nwl, nfl, crm_iters, crm_q)
-    vbary = all_vbary[dates[0]]
-    print(vbary)
+    nfl = nfl / np.median(nfl[np.where(np.percentile(nfl,95)<nfl)[0]])#The flux of the normalized flux that is above 95% percentile
 
     
+    #Remove cosmic rays
+    nwl, nfl = shazam.crm(nwl, nfl, crm_iters, crm_q)
+
+    
+    #Correct wavelength
+    vbary = all_vbary[dates[0]]
     nwls = wavelength_corr(nwl,vbary)
     nfls = nfl
-    #fig, ax  = plt.subplots()
-    #ax.plot(nwl,nfl)
     
     for j in range(len(dates)-1):
         #Pick out correct wl range
         wl, fl = shazam.getFIES(datas[j+1],order=i)
+        
+        #cutting of the ends:
+        wl, fl = wl[ends:-ends], fl[ends:-ends]
 
-        vbary = all_vbary[dates[j+1]]
-        print(vbary)
         
         #normalize
         nwl, nfl = shazam.normalize(wl,fl, normalize_bl,
                                     normalize_poly,normalize_gauss,
                                     normalize_lower,normalize_upper)
-
-        nfl = nfl / np.median(nfl[np.where(np.percentile(nfl,95)<nfl)[0]])#The flux of the normalized flux that is above 95% percentile
+        nfl = nfl / np.median(nfl[np.where(np.percentile(nfl,99)<nfl)[0]])#The flux of the normalized flux that is above 95% percentile
         
-
         #Remove cosmic rays
         nwl, nfl = shazam.crm(nwl, nfl, crm_iters, crm_q)
 
-        #ax.plot(nwl,nfl)
-        
-        
-        #Shift the spectrum
-        nwl = wavelength_corr(nwl,vbary)
 
+        #Shift the spectrum
+        vbary = all_vbary[dates[j+1]]
+        nwl = wavelength_corr(nwl,vbary)
+        
         nfls += np.interp(nwls,nwl,nfl)
 
 
-    #ax.plot(nwls,nfls,label='summed')
-    #ax.legend()
-    #plt.show()
+    #normalize summed spectra:
+    nwls, nfls = shazam.normalize(nwls,nfls, normalize_bl,
+                                    normalize_poly,normalize_gauss,
+                                    normalize_lower,normalize_upper)
 
+    nfls = nfls / np.median(nfls[np.where(np.percentile(nfls,99)<nfls)[0]])#The flux of the normalized flux that is above 95% percentile
 
+    
+    
 
     #Resample and flip:
     r_wl, rf_fl, rf_tl = shazam.resample(nwls,nfls,twl,tfl_MS,
@@ -195,7 +210,65 @@ ax.plot(rvs,summed_bf)
 plt.show()
 
 
+'''
+ends = 100   
 
+start_order = 30
+end_order = 60
+
+all_summed = np.zeros(401)
+for j in range(len(dates)):
+    order_summed_bf = np.zeros(401)
+    for i in np.arange(start_order,end_order,1):
+
+    
+        #Pick out correct wl range
+        wl, fl = shazam.getFIES(datas[0],order=i)
+
+        #cutting of the ends:
+        o_wl, fl = wl[ends:-ends], fl[ends:-ends]
+
+        wl = np.linspace(o_wl[0],o_wl[-1],len(o_wl)*2)
+        fl = np.interp(wl,o_wl,fl)
+        
+        #normalize
+        nwl, nfl = shazam.normalize(wl,fl, normalize_bl,
+                                    normalize_poly,normalize_gauss,
+                                    normalize_lower,normalize_upper)
+
+
+        nfl = nfl / np.median(nfl[np.where(np.percentile(nfl,95)<nfl)[0]])#The flux of the normalized flux that is above 95% percentile
+
+
+        #Remove cosmic rays
+        nwl, nfl = shazam.crm(nwl, nfl, crm_iters, crm_q)
+
+        #Shift spectrum
+        vbary = all_vbary[dates[0]]
+        nwls = wavelength_corr(nwl,vbary)
+        nfls = nfl
+
+
+        #Resample and flip:
+        r_wl, rf_fl, rf_tl = shazam.resample(nwls,nfls,twl,tfl_MS,
+                                             resample_dv, resample_edge)
+
+
+        #Get the bf
+        rvs,bf = shazam.getBF(rf_fl,rf_tl,getBF_rvr, getBF_dv)
+
+        #Fitting the bf
+        fit, model, bfgs = shazam.rotbf_fit(rvs,bf,rotbf_fit_fitsize,
+                                            rotbf_fit_res,rotbf_fit_smooth,
+                                            rotbf_fit_vsini,rotbf_fit_print_report)
+        order_summed_bf += bfgs
+    all_summed += order_summed_bf
+
+
+fig, ax  = plt.subplots()
+ax.plot(rvs,all_summed)
+plt.show()
+'''
 
 
 

@@ -3,6 +3,8 @@ import astropy.io.fits as pyfits
 import glob
 import barycorrpy as bc
 from astropy.time import Time
+import make_table_of_target_info as mt
+
 
 directory = '/home/lakeclean/Documents/speciale/initial_data'
 folders = glob.glob(f'{directory}/*')
@@ -76,12 +78,18 @@ for folder in folders:
         px = 0
         pmra = 0
         pmdec = 0
+        e_px = 0
+        e_pmra = 0
+        e_pmdec = 0
         for line in pm_lines:
             line = line.split(',')
             if line[0].strip(' ') == ID.strip(' '):
                 pmra = float(line[1].strip(' '))
                 pmdec = float(line[2].strip(' '))
                 px = float(line[5].strip(' '))
+                e_pmra = float(line[3].strip(' '))
+                e_pmdec = float(line[4].strip(' '))
+                e_px = float(line[6].strip(' '))
         # epoch in JD
         epoch_jd = Time(date.strip(' ')).jd #julean date
 
@@ -96,6 +104,20 @@ for folder in folders:
         data = data + f'{alt}, {pmra}, {pmdec}, {px}, {epoch_jd}, {v_bary}'
         info.append(data + '\n')
 
+        # Writing to master_table:
+        #mt.add_value(pmra,'e_pmra',ID)
+        #mt.add_value(pmdec,'e_pmdec',ID)
+        #mt.add_value(px,'e_px',ID)
+        #mt.add_value('SIMBAD[mas]','px_source',ID)
+        #mt.add_value('SIMBAD[mas]','pmra_source',ID)
+        #mt.add_value('SIMBAD[mas]','pmdec_source',ID)
+        #print( ID == mt.get_table()['ID'])
+        #print(ID,pmra)
+        
+        
+        
+        
+
 #Sorting based on date:
 def mySort(x):
     x = x.split(',')
@@ -107,5 +129,27 @@ for i in info:
     f.write(i)
 
 f.close()
-        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      
         
