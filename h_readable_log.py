@@ -3,17 +3,29 @@ import pandas as pd
 import make_table_of_target_info as mt
 names = []
 
-lines = open('/home/lakeclean/Documents/speciale/order_file_log.txt').read().split('\n')
+lines = open('/home/lakeclean/Documents/speciale/NOT_order_file_log.txt').read().split('\n')
 files = []
 IDs = []
 dates = []
+for line in lines[:-1]:
+    line = line.split(',')
+    file = line[1].strip()
+    ID = line[0].strip()
+    date = line[2].strip()
+    files.append(file)
+    IDs.append(ID)
+    dates.append(date)
+    if ID not in names:
+        names.append(ID)
+
+lines = open('/home/lakeclean/Documents/speciale/TNG_merged_file_log.txt').read().split('\n')
 for line in lines[:-1]:
     line = line.split(',')
     file = line[2].strip()
     SEQID = line[1].strip()
     ID = line[0].strip()
     date = line[3].strip()
-    if SEQID == 'science':
+    if SEQID == 'SCIENCE':
         files.append(file)
         IDs.append(ID)
         dates.append(date)

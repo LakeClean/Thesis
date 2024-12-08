@@ -298,6 +298,7 @@ def resample(wl,nfl,twl,tfl,dv=1.0,edge=0.0):
   #  lam  : array, resampled wavelength
   #  rf_fl: array, resampled and flipped flux
   #  rf_tl: array, resampled and flipped template flux
+  
 
   wl1, wl2 = min(wl) + edge, max(wl) - edge
   nn       = np.log(wl2/wl1)/np.log(np.float64(1.0) + dv/(const.c.value/1e3))
@@ -641,8 +642,8 @@ def rotbf2_fit(vel,bf,fitsize,res=60000,smooth=2.0,vsini1=5.0,vsini2=5.0,vrad1=0
   params.add('const', value = 0.0)
   params.add('vsini1', value = vsini1)
   params.add('vsini2', value = vsini2)
-  #params.add('limbd1', value = 0.68,vary = False)  
-  params.add('limbd1', value = 0.68,vary = True)  
+  params.add('limbd1', value = 0.68,vary = False)  
+  #params.add('limbd1', value = 0.68,vary = True)  
 
   fit = lmfit.minimize(rotbf2_res, params, args=(vel,bfgs,wf),xtol=1.e-8,ftol=1.e-8,max_nfev=500)
   if print_report: print(lmfit.fit_report(fit, show_correl=False))
@@ -728,8 +729,8 @@ def rotbf_fit(vel,bf,fitsize,res=60000,smooth=5.0,vsini=5.0,print_report=True):
   params  = lmfit.Parameters()
   params.add( 'ampl1',  value = bfgs[peak], min=0)#NOTICE min and max set by Søren
   params.add( 'vrad1',  value = vel[peak] ,min=-1000, max=1000)#NOTICE min and max set by Søren
-  #params.add( 'gwidth', value = gwidth,vary = False )
-  params.add( 'gwidth', value = gwidth,vary = True )
+  params.add( 'gwidth', value = gwidth,vary = False )
+  #params.add( 'gwidth', value = gwidth,vary = True )
   #params.add( 'const',  value = 0.0 )
   params.add( 'const',  value = np.median( bf) )
   params.add( 'vsini1', value = vsini )

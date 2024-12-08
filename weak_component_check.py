@@ -67,8 +67,25 @@ def wavelength_corr(wl,vbary=0):
     c = 299792 #speed of light km/s
     return (1+vbary/c)*wl
 
+print(datas[0])
+mean_of_spectra = np.zeros(2062)
+start_order = 35
+end_order = 60
 
+for ID in all_IDs:
+    if ID == 'KIC-4914923':
+        data, no_orders, bjd, vhelio, star, date, exp = shazam.FIES_caliber(all_files[f'{date}'])
+        for i in np.arange(start_order,end_order,1):
+            #Pick out correct wl range
+            wl, fl = shazam.getFIES(data,order=i)
+            
+            vbary = all_vbary[dates[0]]
+            nwls = wavelength_corr(nwl,vbary)
+            nfls = nfl
+      
+        
 
+'''
 normalize_bl = np.array([])
 normalize_poly=1
 normalize_gauss=True
@@ -208,7 +225,7 @@ for i in np.arange(start_order,end_order,1):
 fig, ax  = plt.subplots()
 ax.plot(rvs,summed_bf)
 plt.show()
-
+'''
 
 '''
 ends = 100   
