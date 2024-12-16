@@ -11,8 +11,9 @@ Script for unzipping the files from HARPS and taking the
 ordered files and putting them in the right directory.
 '''
 
-'''
+
 #HARPS:
+'''
 path = '/home/lakeclean/Downloads/'
 
 
@@ -71,7 +72,9 @@ for file in files:
 os.rmdir(temporary_dir)
 '''
 
+
 #HIRES:
+'''
 path = '/home/lakeclean/Downloads/'
 
 
@@ -110,10 +113,48 @@ for file in files:
         os.mkdir(final_dir + date_begin)
         new_name = final_dir + date_begin + file[length:]
         shutil.copyfile(file,new_name)
+'''
 
 
+#ESpaDOns:
+path = '/home/lakeclean/Documents/speciale/initial_data/ESPaDOns/CFHT*'
+folders = glob.glob(path)
+all_files = []
+for folder in folders:
+    #print(folder)
+    files = glob.glob(folder+'/*')
+    for file in files:
+            all_files.append(file)
 
 
+final_dir = '/home/lakeclean/Documents/speciale/initial_data/ESPaDOns/'
+
+length = len(path)+1
+
+for file in all_files:
+    #print(file)
+    directories = glob.glob(f'{final_dir}*')
+    header = pyfits.getheader(file)
+    try:
+        epoch_date = header['DATE'].strip(' ')[:len('2016-09-19')]
+        #print(file)
+    except:
+        #print(file)
+        continue
+    date_begin = epoch_date
+    #print(epoch_date,header['OBJNAME'])
+    new_name = final_dir + date_begin + '/'+ file[length:]
+    print(new_name)
+    
+    
+    
+    if final_dir + date_begin in directories:
+        shutil.copyfile(file,new_name)
+
+    else:
+        os.mkdir(final_dir + date_begin)
+        shutil.copyfile(file,new_name)
+    
 
 
 

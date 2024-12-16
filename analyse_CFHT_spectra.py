@@ -18,24 +18,11 @@ tfl_MS = template_data['solarflux']
 twl = template_data['wavelength']
 
 
-
 #fig, ax  = plt.subplots()
 #ax.plot(twl,tfl_MS)
 #plt.show()
 
 #import the RGB info
-'''
-lines = open('/home/lakeclean/Documents/speciale/NOT/Target_names_and_info.txt').read().split('\n')[1:14]
-all_target_names = [] # Just a list of the names
-RGBs = [] # names of known RGB stars
-for line in lines:
-    line = line.split()
-    all_target_names.append(line[0])
-
-    if len(line)>5: #noting the RG stars
-        if line[5]=='(RGB)':
-            RGBs.append(line[0])
-'''
 tab = mt.get_table()
 all_target_names = tab['ID'].data # Just a list of the names
 RGBs = tab['star_type'].data # names of known RGB stars
@@ -43,7 +30,8 @@ all_ras = tab['RA'].data # right ascension of all stars
 all_decs = tab['DEC'].data #declination of all stars
 
 
-def analyse_spectrum(file, template='MS',start_order=1, append_to_log=False,
+def analyse_spectrum(file, template='MS',start_wl=0, end_wl=100000,
+                     bin_size=200, append_to_log=False,
                      
                      normalize_bl = np.array([]),normalize_poly=1,normalize_gauss=True,
                      normalize_lower=0.5,normalize_upper=1.5,
@@ -68,7 +56,7 @@ def analyse_spectrum(file, template='MS',start_order=1, append_to_log=False,
                      show_plots=True, save_plots=True, save_data = True,
                      show_bin_plots=False,save_bin_info=False): 
     '''
-    Analyses a raw ordered spectra.
+    Analyses a raw merged spectra.
     The function needs the path to the ordered fits file.
     It then stores the analysis of the spectra in existing directory.
     
@@ -77,7 +65,7 @@ def analyse_spectrum(file, template='MS',start_order=1, append_to_log=False,
         start_wl      :int, starting wavelength [Ångstrom]
         end_wl        :int, ending wavelength [Ångstrom]
         template      :str, either 'MS' or 'RG'
-        bin_size      :int, size of wavelength bin
+        bin_size      :int, size of wavelength bin in Å
         SB_type       :int, either 1 or 2 works atm. when use_SVD=True
         append_to_log :bool, append the given parameters to a log
 
@@ -112,40 +100,72 @@ def analyse_spectrum(file, template='MS',start_order=1, append_to_log=False,
             - resample and flip spectrum and template with shazam.resample
             -
     '''
-    data, no_orders, bjd, vhelio, star, date, exp = shazam.FIES_caliber(file)
-    
-    header = pyfits.getheader(file)
-    ra = header['RA']
-    dec = header['DEC']
+    #######################################################################
+    def save_datas(datas,labels,title):
+        '''
+        Function for saving the data:
+         - datas: list of lists
+         - labels: labels of the input of datas list
+         - title: The title of file data is saved to
+        '''
+        f = open(path + f"/data/{title}.txt",'w')
+        result1 = ''
+        for i in labels:
+            result1 += f'{i},'
+            
+        f.write(f'{result1[:-1]}\n')
+        
+        for i in range(len(datas[0])):
+            result2 = ''
+            for j in range(len(datas)):
+                result2 += f'{datas[j][i]},'
+            f.write(f'{result2[:-1]}\n')
+            
+        f.close()
 
+    def sort_spectrum(wl,fl):
+        '''
+        Function for sorting illsorted spectra:
+        '''
+        new_fl = [x for y,x in sorted(zip(wl,fl))]
+        new_wl = [y for y,x in sorted(zip(wl,fl))]
+        return np.array(new_wl),np.array(new_fl)
+    ########################################################################
+
+        
+    fits_data = pyfits.getdata(file) #flux info
+    header = pyfits.getheader(file)
+
+    #We have to start from the starting wavelength
+    #lam = header['CDELT1']*np.arange(header['NAXIS1'])+header['CRVAL1'] #wavelengths
+    lam = fits_data[3,:]*10 #The unnormlaized wavelength (is in nm and is therefore changed to Å
+    data = fits_data[4,:] #The 'Intensity' or flux of the spectra
+
+    lam,data = sort_spectrum(lam,data) #spectrum is sorted
+    
+    if start_wl<lam[0]:
+        start_wl = lam[0]
+    if end_wl > lam[-1]:
+        end_wl = lam[-1]
+    
     #Finding out the name of target based on RA and DEC:
+    ra = header['RA_DEG'] #The right ascension of target
+    dec = header['DEC_DEG'] #The declination of target
     coord_dist = np.sqrt( (all_ras- ra)**2 + (all_decs-dec)**2)
     epoch_name = all_target_names[np.where(coord_dist == min(coord_dist))[0]][0]
+
+    epoch_date = header['DATE'].strip(' ')
     
-    
-    '''
-    epoch_name = header['TCSTGT'].strip(' ').replace('-','') #name of target
-    
-    try: #Specific test for old not targets
-        test = int(epoch_name[0])
-        if test == 0:
-            epoch_name = 'KIC' + epoch_name[1:]
-        else:
-            epoch_name = 'KIC' + epoch_name
-    except:
-        pass
-    '''
-    
-    epoch_date = header['DATE-OBS'].strip(' ')   #date of fits creation
-    epoch_Vhelio = header['VHELIO'] # heliocentric velocity
-    print(epoch_name,header['TCSTGT'].strip(' '), epoch_date)
+    #epoch_Vhelio = header['VHELIO'] # heliocentric velocity
+    #epoch_name = header['HIERARCH TNG OBS TARG NAME'].strip(' ').replace('-','') #name of target
+    print(epoch_name, epoch_date)
     
     if epoch_name in RGBs:
         tfl = tfl_RG
     else:
         tfl = tfl_MS
 
-    path = f'/home/lakeclean/Documents/speciale/target_analysis/{epoch_name}/{epoch_date}'
+    path = '/home/lakeclean/Documents/speciale/target_analysis/' + epoch_name +'/' + epoch_date
 
     #######################################################################
 
@@ -167,27 +187,7 @@ def analyse_spectrum(file, template='MS',start_order=1, append_to_log=False,
         f.open('analyse_log.txt','w')
         f.write(lines)
         f.close()
-        
-
-    
-
-    #######################################################################
-    def save_datas(datas,labels,title):
-        f = open(path + f"/data/{title}.txt",'w')
-        result1 = ''
-        for i in labels:
-            result1 += f'{i},'
-            
-        f.write(f'{result1[:-1]}\n')
-        
-        for i in range(len(datas[0])):
-            result2 = ''
-            for j in range(len(datas)):
-                result2 += f'{datas[j][i]},'
-            f.write(f'{result2[:-1]}\n')
-            
-        f.close()
-    ########################################################################
+    #########################################################################
 
 
     
@@ -195,16 +195,13 @@ def analyse_spectrum(file, template='MS',start_order=1, append_to_log=False,
     #Raw spectrum is plotted
     
     fig, ax = plt.subplots()
-    for order in np.arange(3,no_orders,1):
-        
-        x_label, y_label, title ='wavelength [Å]', 'flux (raw)', 'ordered'
-        xs, ys = shazam.getFIES(data,order=order)
-
-        ax.plot(xs,ys)
-        ax.set_xlabel(x_label)
-        ax.set_ylabel(y_label)
-        plot_title = title #+ ' ' + epoch_name + ' ' + epoch_date
-        ax.set_title(plot_title+ ' ' + epoch_name + ' ' + epoch_date)
+    x_label, y_label, title ='wavelength [Å]', 'flux (raw)', 'ordered'
+    xs, ys = lam, data
+    ax.plot(xs,ys)
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+    plot_title = title #+ ' ' + epoch_name + ' ' + epoch_date
+    ax.set_title(plot_title+ ' ' + epoch_name + ' ' + epoch_date)
     
     if save_plots: fig.savefig(path+f"/plots/{plot_title.replace(' ','_')}.svg",
                                    dpi='figure', format='svg')
@@ -214,7 +211,8 @@ def analyse_spectrum(file, template='MS',start_order=1, append_to_log=False,
     plt.close()
     
     
-
+    n_bins = int((end_wl-start_wl)//bin_size) #number of bins is found
+    
     epoch_nwls = [] #binned norm wl 
     epoch_nfls = [] #binned norm fl
 
@@ -229,36 +227,35 @@ def analyse_spectrum(file, template='MS',start_order=1, append_to_log=False,
 
     epoch_ccf = [] #binned BF
 
-    epoch_ampl1, epoch_gwidth = np.zeros(no_orders), np.zeros(no_orders) #parameters of fit to bf
-    epoch_vrad1, epoch_vsini1  = np.zeros(no_orders), np.zeros(no_orders)#parameters of fit to bf
-    epoch_limbd, epoch_const = np.zeros(no_orders), np.zeros(no_orders)#parameters of fit to bf
+    epoch_ampl1, epoch_gwidth = np.zeros(n_bins), np.zeros(n_bins) #parameters of fit to bf
+    epoch_vrad1, epoch_vsini1  = np.zeros(n_bins), np.zeros(n_bins)#parameters of fit to bf
+    epoch_limbd, epoch_const = np.zeros(n_bins), np.zeros(n_bins)#parameters of fit to bf
 
-    epoch_ampl2 = np.zeros(no_orders)#parameters of fit to bf
-    epoch_vrad2, epoch_vsini2  = np.zeros(no_orders), np.zeros(no_orders)#parameters of fit to bf
+    epoch_ampl2 = np.zeros(n_bins)#parameters of fit to bf
+    epoch_vrad2, epoch_vsini2  = np.zeros(n_bins), np.zeros(n_bins)#parameters of fit to bf
 
-    slopes = np.zeros(no_orders) 
-    bin_wls = np.zeros(no_orders)
+    slopes = np.zeros(n_bins) 
+    #bin_wls = np.zeros(n_bins)
+    bin_wls = np.arange(n_bins)* bin_size +start_wl
 
-    #Going through each order
-    for i in np.arange(start_order,no_orders,1):
-        
+    for i in np.arange(n_bins):
+        begin = start_wl + bin_size*i
+        end = begin + bin_size
 
         #Pick out correct wl range
-        wl, fl = shazam.getFIES(data,order=i)
-        bin_wls[i] = wl[int(len(wl)/2)]
+        index = np.where((lam>begin) & ( lam<end))[0]
+        wl = lam[index]
+        fl = data[index]
 
         #Check if template does not cover spectrum:
-        if wl[0] < twl[0]:
-            print(f'order {i} was outside template:', wl[0], twl[0])
+        if (wl[0] < twl[0]) or (wl[-1]>twl[-1]):
+            print(f'order {i}[{wl[0]},{wl[-1]}] was outside template[{twl[0]},{twl[-1]}]')
             continue
         
-
         if save_data: save_datas([wl,fl],['wavelength [Å]', 'flux (raw)'],
                                  f"order_{i}_raw_spectrum")
         
-        if np.mean(fl)<0.001: print('flux is very low')
-        
-  
+        if np.mean(fl)<0.001: print('flux is very low') 
 
         #normalize
         nwl, nfl = shazam.normalize(wl,fl, normalize_bl,normalize_poly,
@@ -367,7 +364,7 @@ def analyse_spectrum(file, template='MS',start_order=1, append_to_log=False,
             ax[2].set_ylabel('Flipped flux')
             ax[2].legend()
 
-            fig.suptitle(f'Order #{i} ' + epoch_name + ' ' + epoch_date)
+            fig.suptitle(f'Bin #{i} ' + epoch_name + ' ' + epoch_date)
             
             
             fig, ax = plt.subplots(figsize=(8,3))
@@ -401,58 +398,38 @@ def analyse_spectrum(file, template='MS',start_order=1, append_to_log=False,
                                   'epoch_const'],
                                      f"bf_fit_params")
 
-    # Plotting bfs or ccfs together:
-    if use_SVD:
-        fig, ax = plt.subplots()
-        x_label, y_label, title ='rvs [km/s]', 'broadening function', 'broadening function'
-        k=0
-        for xs, ys,smoothed,model in zip(epoch_rvs,epoch_bf,epoch_smoothed_bf,epoch_model):
-            #ax.plot(xs,ys+k)
-            ax.plot(xs,smoothed+k,label='smoothed bf')
-            ax.plot(xs,model+k,label='fit to smoothed bf')
-            k+=0.1
-        #ax.legend()
-        ax.set_xlabel(x_label)
-        ax.set_ylabel(y_label)
-        ax.set_ylim(0,no_orders*0.1)
-        ax2 = ax.twinx()  
-        ax2.set_ylim(bin_wls[0], bin_wls[-1])
-        plot_title = title #+ ' ' + epoch_name + ' ' + epoch_date
-        ax.set_title(plot_title+ ' ' + epoch_name + ' ' + epoch_date)
-        if save_plots: fig.savefig(path+f"/plots/{plot_title.replace(' ','_')}.svg",
+    # Plotting bfs together:
+    fig, ax = plt.subplots()
+    x_label, y_label, title ='rvs [km/s]', 'broadening function', 'broadening function'
+    k=0
+    for xs, ys,smoothed,model in zip(epoch_rvs,epoch_bf,epoch_smoothed_bf,epoch_model):
+        ax.plot(xs,smoothed+k,label='smoothed bf')
+        ax.plot(xs,model+k,label='fit to smoothed bf')
+        k+=0.1
+    #ax.legend()
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+    ax.set_ylim(0,n_bins*0.1)
+    ax2 = ax.twinx()  
+    ax2.set_ylim(bin_wls[0], bin_wls[-1])
+    plot_title = title #+ ' ' + epoch_name + ' ' + epoch_date
+    ax.set_title(plot_title+ ' ' + epoch_name + ' ' + epoch_date)
+    if save_plots: fig.savefig(path+f"/plots/{plot_title.replace(' ','_')}.svg",
                                    dpi='figure', format='svg')
-        if show_plots: plt.show()
-        plt.close()
+    if show_plots: plt.show()
+    plt.close()
 
-    else:
-        fig, ax = plt.subplots()
-        x_label, y_label, title ='rvs [km/s]', 'cross correlation', 'cross correlation'
-        k = 0
-        for xs, ys in zip(epoch_rvs,epoch_ccf):
-            ax.plot(xs,ys+k)
-            k+=1
-        ax.set_xlabel(x_label)
-        ax.set_ylabel(y_label)
-        ax.set_ylim(0,no_orders)
-        ax2 = ax.twinx()  
-        ax2.set_ylim(bin_wls[0], bin_wls[-1])
-        plot_title = title #+ ' ' + epoch_name + ' ' + epoch_date
-        ax.set_title(plot_title+ ' ' + epoch_name + ' ' + epoch_date)
-        if save_plots: fig.savefig(path+f"/plots/{plot_title.replace(' ','_')}.svg",
-                                   dpi='figure', format='svg')
-        if show_plots: plt.show()
-        plt.close()
 
     
     # Plotting radial velocities measured:
     fig, ax = plt.subplots()
-    x_label, y_label='order_wl', 'Radial Velocity 1 [km/s]'
-    title = 'radial velocity per order Uncorrected'
+    x_label, y_label='bin_wl', 'Radial Velocity 1 [km/s]'
+    title = 'radial velocity per bin Uncorrected'
     xs, ys = bin_wls,epoch_vrad1
     ax.scatter(xs,ys,label='rv1')
     ax.scatter(bin_wls,epoch_vrad2,label='rv2')
     ax.plot([xs[0],xs[-1]],[np.mean(ys),np.mean(ys)],label='mean',color='r')
-    ax.plot([xs[0],xs[-1]],[epoch_Vhelio,epoch_Vhelio],label=f'V_helio={epoch_Vhelio}',color='g')
+    #ax.plot([xs[0],xs[-1]],[epoch_Vhelio,epoch_Vhelio],label=f'V_helio={epoch_Vhelio}',color='g')
     ax.legend()
     ax.set_xlabel(x_label)
     ax.set_ylabel(y_label)
@@ -470,8 +447,8 @@ def analyse_spectrum(file, template='MS',start_order=1, append_to_log=False,
     '''
     # Plotting vsini measured:
     fig, ax = plt.subplots()
-    x_label, y_label='order_wl', 'Vsini[km/s]'
-    title = 'vsini per order'
+    x_label, y_label='bin_wl', 'Vsini[km/s]'
+    title = 'vsini per bin'
     xs, ys = bin_wls,epoch_vsini1
     ax.scatter(xs,ys,label='vsini')
     ax.plot([xs[0],xs[-1]],[np.mean(ys),np.mean(ys)],label='mean',color='r')
@@ -498,7 +475,7 @@ def analyse_spectrum(file, template='MS',start_order=1, append_to_log=False,
 
 #### importing all the spectra:
 
-lines = open('/home/lakeclean/Documents/speciale/NOT_old_LOWRES_order_file_log.txt').read().split('\n')
+lines = open('/home/lakeclean/Documents/speciale/ESpaDOns_merged_file_log.txt').read().split('\n')
 files = []
 IDs = []
 dates = []
@@ -508,7 +485,6 @@ for line in lines[1:-1]:
     #SEQID = line[1].strip()
     ID = line[0].strip()
     date = line[2].strip()
-    #if SEQID == 'science':
     files.append(file)
     IDs.append(ID)
     dates.append(date)
@@ -530,33 +506,36 @@ for IDline in IDlines[:-1]:
             vguess2s.append(line[2].split('/')[1].strip(' '))
             
         
-
 #Typical resolutions: NOT (HIRES = 67000, LOWRES = 25000) https://www.not.iac.es/instruments/fies/
 #                     TNG (HARPS = 115000)
+#                     KECK (HIRES = 47700)
+#                     CFHT: Apparantly all over the place: (65000-90000)
+
 
 k=0
 time1 = time()
 for file,ID,date in zip(files[0:],IDs[0:],dates[0:]):
-    
-    #print(date)
-    #analyse_spectrum(file,bin_size=200,use_SVD=,
-    #                 show_bin_plots=False,show_plots=False)
-    #if ID == 'KIC9025370':
+
+    if ID == 'KIC9025370':
+            
         #if date == '2024-04-01T23:36:23.915':
-        #if (Time(date).jd < 2457506):# and (Time(date).jd > 2457294):
+        #if Time(date).jd > 2460618.4256590856:
             print(f'Spectrum: {k}/{len(files)}, Time: {time()-time1}s')
             time1 = time()
             k+=1
-            start_order=1
             show_bin_plots=False
-            save_data=True
+            save_data=False
             save_plots=False
-            show_plots=False
+            show_plots=True
             rotbf_fit_print_report=False
-            resolution = 25000 #Notice different instruments have different resolution
+            start_wl=00
+            end_wl=100000
+            bin_size=80
+            resolution = 70000#Notice different instruments have different resolution
+
             
             if ID not in SB2IDs:
-                    analyse_spectrum(file,SB_type = 1, start_order=start_order,
+                    analyse_spectrum(file,SB_type = 1, bin_size=bin_size, start_wl = start_wl, end_wl=end_wl,
                              show_bin_plots=show_bin_plots,save_data=save_data,
                              save_plots=save_plots,show_plots=show_plots,
                              rotbf_fit_print_report=rotbf_fit_print_report,
@@ -566,15 +545,15 @@ for file,ID,date in zip(files[0:],IDs[0:],dates[0:]):
                 for SB2_date,SB2_type,vguess1,vguess2 in zip(SB2_dates,SB2_types, vguess1s,vguess2s):
                     if SB2_date == date:
                         if SB2_type == '1':
-                            analyse_spectrum(file,SB_type = 1, start_order=start_order,
+                            analyse_spectrum(file,SB_type = 1, bin_size=bin_size, start_wl = start_wl, end_wl=end_wl,
                                      show_bin_plots=show_bin_plots,save_data=save_data,
                                      save_plots=save_plots,show_plots=show_plots,
-                                     rotbf_fit_print_report=rotbf_fit_print_report,
+                                     rotbf2_fit_print_report=rotbf_fit_print_report,
                                      rotbf_fit_res=resolution)
                                 
                         if SB2_type == '2':
                             print('Initial guesses: ', vguess1,vguess2)
-                            analyse_spectrum(file,SB_type = 2, start_order=start_order,
+                            analyse_spectrum(file,SB_type = 2, bin_size=bin_size, start_wl = start_wl, end_wl=end_wl,
                                      show_bin_plots=show_bin_plots,save_data=save_data,
                                      save_plots=save_plots,show_plots=show_plots,
                                      rotbf2_fit_print_report=rotbf_fit_print_report,
@@ -589,6 +568,32 @@ for file,ID,date in zip(files[0:],IDs[0:],dates[0:]):
                              #rotbf_fit_fitsize=30,rotbf_fit_res=60000,rotbf_fit_smooth=2.0,
                              #rotbf_fit_vsini=5.0,rotbf_fit_print_report=True)
     
+    
+
+'''
+normalize_bl = np.array([]),normalize_poly=1,normalize_gauss=True,
+                     normalize_lower=0.5,normalize_upper=1.5,
+                     
+                     crm_iters = 1, crm_q = [99.0,99.9,99.99],
+                     
+                     resample_dv=1.0, resample_edge=0.0,
+                     
+                     getCCF_rvr=401, getCCF_ccf_mode='full',
+                     
+                     getBF_rvr=401, getBF_dv=1.0,
+                     
+                     rotbf2_fit_fitsize=30,rotbf2_fit_res=60000,rotbf2_fit_smooth=2.0,
+                     rotbf2_fit_vsini1=10.0,rotbf2_fit_vsini2=5.0,rotbf2_fit_vrad1=-30.0,
+                     rotbf2_fit_vrad2=-17.0,rotbf2_fit_ampl1=0.5,rotbf2_fit_ampl2=0.5,
+                     rotbf2_fit_print_report=False,rotbf2_fit_smoothing=True,
+                     
+                     rotbf_fit_fitsize=30,rotbf_fit_res=60000,rotbf_fit_smooth=2.0,
+                     rotbf_fit_vsini=5.0,rotbf_fit_print_report=True,
+                     
+                     use_SVD=False,SB_type=1,
+                     show_plots=True, save_plots=True, save_data = True,
+                     show_bin_plots=False,save_bin_info=False):
+'''
 
 
 

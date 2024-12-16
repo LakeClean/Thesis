@@ -43,7 +43,7 @@ def find_rv_time(ID,log_path,data_type, limits=[0,-1],plot_offset=True):
                     all_IDs.append(line[0].strip())
                     all_dates.append(line[2].strip())
                     #all_vhelios.append(float(line[5].strip()))
-                    files.append(line[2].strip())
+                    files.append(line[1].strip())
                     all_vbary[line[2].strip()] = float(line[-2].strip())/1000 #correcting from m/s to km/s
             
         def fit_line(x,y):
@@ -382,7 +382,7 @@ def find_rv_time(ID,log_path,data_type, limits=[0,-1],plot_offset=True):
             rv_dict[rv_names[i]] = rv_dat[i]
         df = pd.DataFrame(rv_dict)
         #Only making a file if data is not empty
-        print(rv_dat)
+        #print(rv_dat)
         if len(rv_dat[0])>0:
             df.to_csv(rv_path,index=False)
 
@@ -409,7 +409,12 @@ log_paths = ['/home/lakeclean/Documents/speciale/NOT_order_file_log.txt',
              '/home/lakeclean/Documents/speciale/NOT_old_LOWRES_order_file_log.txt',
              '/home/lakeclean/Documents/speciale/TNG_merged_file_log.txt']
 
+data_types = ['NOT_old_LOWRES']
+log_paths = ['/home/lakeclean/Documents/speciale/NOT_old_LOWRES_order_file_log.txt']
+
+
 for data_type, log_path in zip(data_types, log_paths):
+    '''
     #KIC12317678
     if True:
         find_rv_time('KIC12317678',
@@ -421,12 +426,15 @@ for data_type, log_path in zip(data_types, log_paths):
         find_rv_time('KIC9693187',
                      log_path=log_path,
                      data_type=data_type)
+    '''
 
     #KIC4914923
     if True:
         find_rv_time('KIC4914923',
                      log_path=log_path,
-                     data_type=data_type)
+                     data_type=data_type,
+                     limits = [20,60])
+    '''
 
 
     #KIC9025370
@@ -434,15 +442,16 @@ for data_type, log_path in zip(data_types, log_paths):
         find_rv_time('KIC9025370',
                      log_path=log_path,
                      data_type=data_type)
+    
 
 
     #KIC10454113
-    if False:
+    if True:
         find_rv_time('KIC10454113',
                      log_path=log_path,
                      data_type=data_type)
 
-
+    
     #KIC4457331
     if True:
         find_rv_time('KIC4457331',
@@ -495,6 +504,7 @@ for data_type, log_path in zip(data_types, log_paths):
         find_rv_time('HD208139',
                      log_path=log_path,
                      data_type=data_type)
+    '''
 
 
 

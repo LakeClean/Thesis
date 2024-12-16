@@ -22,17 +22,19 @@ target_ID = 'KIC10454113'
 directory = f'/home/lakeclean/Documents/speciale/initial_data/KECK/{target_ID}'
 folders = glob.glob(f'{directory}/*')
 f = open('/home/lakeclean/Documents/speciale/KECK_ordered_file_log.txt','w')
-head = "ID, directory, date, T_exp, HELIOVEL, "
-head = head + "ra, dec, lat, longi, alt, pmra, pmdec, px"
-head = head + ", epoch_jd, v_bary, TELESCOP"
+head = "ID,directory,date,T_exp,"
+head = head + "ra,dec,lat,longi,alt,pmra,pmdec,px"
+head = head + ",epoch_jd,v_bary,TELESCOP"
 f.write(head+"\n")
 info = []
 
 for folder in folders:
 
-    files = glob.glob(f'{folder}/HI*') #importing unaltered files
+        files = glob.glob(f'{folder}/HI*') #importing unaltered files
+        file = files[0] # Taking the first order of the day
+    
 
-    for file in files:
+    #for file in files:
         #print(file)
         
         header = pyfits.getheader(file)
@@ -43,7 +45,7 @@ for folder in folders:
         #CDELT1 = header['CDELT1'] #wavelength per pixel
         #CRVAL1 = header['CRVAL1'] #Starting wavelength
         #fiber = header['FIFMSKNM'] #The type of fiber, 4=high res
-        VHELIO = header['HELIOVEL'] #heliocentric velocity
+        #VHELIO = header['HELIOVEL'] #heliocentric velocity
         date = header['DATE'] #Fitsfile creation date
         #SEQID = header['OBS-TYPE'] #either science or thorium argon
         TELESCOP = 'KECK' #Telescope used.
@@ -78,9 +80,9 @@ for folder in folders:
                                pmdec=pmdec, px=px, leap_update=True)
         
         v_bary = result[0][0] # barycentric velocity in m/s
-        data = f'{ID}, {file}, {date}, {T_exp}, {VHELIO}, '
-        data = data + f'{ra}, {dec}, {lat}, {longi}, '
-        data = data + f'{alt}, {pmra}, {pmdec}, {px}, {epoch_jd}, {v_bary}, {TELESCOP}'
+        data = f'{ID},{folder},{date},{T_exp},'
+        data = data + f'{ra},{dec},{lat},{longi},'
+        data = data + f'{alt},{pmra},{pmdec},{px},{epoch_jd},{v_bary},{TELESCOP}'
         info.append(data + '\n')
         
         

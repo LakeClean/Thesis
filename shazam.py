@@ -620,8 +620,9 @@ def rotbf2_res(params,vel,bf,wf):
 
 def rotbf2_fit(vel,bf,fitsize,res=60000,smooth=2.0,vsini1=5.0,vsini2=5.0,vrad1=0.0,vrad2=0.0,ampl1=1.0,ampl2=0.5,print_report=True,smoothing=True):
   
-  if smoothing: bfgs   = smoothBF(vel,bf,sigma=smooth/1.) # If statement an subsequent line bf = bfgs added by Søren
-  bf = bfgs
+  if smoothing: bfgs   = smoothBF(vel,bf,sigma=smooth/1.) # If statement and subsequent line bf = bfgs added by Søren
+  if not smoothing: bfgs = bf
+  #bf = bfgs
   c      = np.float64(299792.458)
   gwidth = np.sqrt(((c/res)/(2.354*1.))**2 + (smooth/1.)**2) # 1. is current dv value!
  

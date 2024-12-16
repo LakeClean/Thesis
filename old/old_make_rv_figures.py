@@ -12,6 +12,12 @@ from astroquery.vizier import Vizier
 from ophobningslov import *
 import make_table_of_target_info as mt
 
+#KIC10454113:
+V_litt = [-22.69,-20.683]
+e_V_litt = [0.39,0]
+V_litt_time = [175.32222325215116,-568.0389999998733]
+
+
 
 
 def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
@@ -449,7 +455,6 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
     TNG_jds = df['jd'].to_numpy()
     TNG_dates = df['date'].to_numpy()
     TNG_vbary = df['vbary'].to_numpy()
-    TNG_vhelio = df['vhelio'].to_numpy()
     
     
 
@@ -485,6 +490,12 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
         
         ax[0].errorbar(epoch_jds[excluded2], epoch_rv2s[excluded2], epoch_rv1_errs[excluded2],
                    fmt='x',capsize=2,color='grey')
+        
+        ax[0].errorbar(TNG_jds, TNG_rv1s, TNG_rv1_errs,
+                   fmt='o',capsize=2,color='green')
+
+        ax[0].errorbar(TNG_jds, TNG_rv2s, TNG_rv2_errs,
+                   fmt='o',capsize=2,color='green')
             
 
     else:
@@ -495,10 +506,13 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
                    fmt='o',capsize=2,color='b')
 
         ax[0].errorbar(TNG_jds, TNG_rv1s, TNG_rv1_errs,
-                   fmt='o',capsize=2,color='r')
+                   fmt='o',capsize=2,color='green')
 
         ax[0].errorbar(TNG_jds, TNG_rv2s, TNG_rv2_errs,
-                   fmt='o',capsize=2,color='b')
+                   fmt='o',capsize=2,color='green')
+
+        ax[0].errorbar(V_litt_time, V_litt, e_V_litt,
+                   fmt='o',capsize=2,color='purple')
 
         
 
@@ -871,6 +885,14 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
             
             ax[0].errorbar(epoch_jds[excluded2]%p, epoch_rv1s[excluded2], epoch_rv1_errs[excluded2],
                    fmt='x',capsize=2,color='grey')
+
+            #TNG
+            ax[0].errorbar(TNG_jds%p, TNG_rv2s, TNG_rv2_errs,
+                   fmt='o',capsize=2,color='green')
+            ax[0].errorbar(TNG_jds%p, TNG_rv1s, TNG_rv1_errs,
+                   fmt='o',capsize=2,color='green')
+
+
             
             proxy_time = np.linspace(0,p,1000)
 
@@ -967,6 +989,7 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
         #We construct a list of the 30th order for all the times of the star
         date_len = len(path + ID)+1
         folder_dates = glob.glob(path + ID + '/*')
+        print(path + ID + '/*')
 
         def sorter(x):
             return Time(x[date_len:]).mjd
@@ -1008,6 +1031,7 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
         levels = np.linspace(scale_river[0],scale_river[1],scale_river[2])
 
         #Shifting the broadening funcitons by the barycentric correction
+        
         for i in range(num_dates):
             shift = int(epoch_vbary[i])
             for j in np.arange(shift+40,rv_region-40,1):
@@ -1015,7 +1039,7 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
 
                     
                     
-            
+        print(proxy_smoothed)
         cs = ax.contourf(rvs,dates,proxy_smoothed,levels, cmap='RdGy')
         fig.colorbar(cs)
         ax.set_xlabel('Radial Velocity [km/s]')
@@ -1064,7 +1088,7 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
 
 #KIC-12317678
 if False:
-    plot_rv_time('KIC-12317678',fit_params=[18,26,0.3,100,82,-41],limits=[20,60],SB_type=2,
+    plot_rv_time('KIC12317678',fit_params=[18,26,0.3,100,82,-41],limits=[20,60],SB_type=2,
                  orbital_period=100, show_plot=False,save_plot=True, report_fit=True,
                  make_phase_plot=True,make_river_plot=True, scale_river=[-0.0005,0.01,100],
                  make_table=True,print_mass = True,exclude_points=12,
@@ -1075,7 +1099,7 @@ if False:
 
 #KIC-9693187
 if False:
-    plot_rv_time('KIC-9693187',fit_params=[29,26,0.5,50,104,-9],limits=[20,60],SB_type=2,
+    plot_rv_time('KIC9693187',fit_params=[29,26,0.5,50,104,-9],limits=[20,60],SB_type=2,
                  orbital_period=100, show_plot=False,save_plot=True, report_fit=True,
                  make_phase_plot=True,make_river_plot=True, scale_river=[-0.0005,0.08,100],
                  make_table=True,print_mass = True,exclude_points=10,
@@ -1084,7 +1108,7 @@ if False:
 
 #KIC-4914923
 if False:
-    plot_rv_time('KIC-4914923',fit_params=[15,0.2,105,99,-24],limits=[20,60],SB_type=1,
+    plot_rv_time('KIC4914923',fit_params=[15,0.2,105,99,-24],limits=[20,60],SB_type=1,
                  orbital_period=100, show_plot=False,save_plot=True, report_fit=True,
                  make_phase_plot=True,make_river_plot=True, scale_river=[-0.0005,0.14,100],
                  make_table=True,print_mass = True,exclude_points=8,
@@ -1093,10 +1117,10 @@ if False:
 
 
 #KIC-9025370
-if True:
-    plot_rv_time('KIC-9025370',fit_params=[16,16,0.271,200,239,-14],limits=[20,60],SB_type=2,
-                 orbital_period=100, show_plot=False,save_plot=True, report_fit=True,
-                 make_phase_plot=True,make_river_plot=True, scale_river=[-0.0005,0.14,100],
+if False:
+    plot_rv_time('KIC9025370',fit_params=[16,16,0.271,200,239,-14],limits=[20,60],SB_type=2,
+                 orbital_period=100, show_plot=True,save_plot=True, report_fit=True,
+                 make_phase_plot=True,make_river_plot=False, scale_river=[-0.0005,0.14,100],
                  make_table=True,print_mass=True,exclude_points=12,
                  res1=4,res_off1=-0.04,res2=4,res_off2=0.03,
                  find_rv=False)
@@ -1104,9 +1128,9 @@ if True:
 
 #KIC-10454113
 if True:
-    plot_rv_time('KIC-10454113',fit_params=[],limits=[20,60],SB_type=1,
-                 orbital_period=100, show_plot=False,save_plot=True, report_fit=True,
-                 make_phase_plot=False,make_river_plot=True, scale_river=[-0.0005,0.08,100],
+    plot_rv_time('KIC10454113',fit_params=[],limits=[20,60],SB_type=1,
+                 orbital_period=100, show_plot=True,save_plot=True, report_fit=True,
+                 make_phase_plot=False,make_river_plot=False, scale_river=[-0.0005,0.08,100],
                  make_table=True,
                  find_rv=False)
 

@@ -41,18 +41,18 @@ path = '/home/lakeclean/Documents/speciale/initial_data'
 
 
 
-path = f'/home/lakeclean/Documents/speciale/order_file_log.txt'
+path = f'/home/lakeclean/Documents/speciale/NOT_order_file_log.txt'
 lines= open(path).read().split('\n')
 all_IDs, all_vhelios,all_dates= [], [], []
 all_vbary = {}
 all_files = {}
 for line in lines[:-1]:
     line = line.split(',')
-    if line[1].strip() == 'science':
-        if line[3].strip() in dates:
+    #if line[1].strip() == 'science':
+    if line[2].strip() in dates:
             all_IDs.append(line[0].strip())
             all_dates.append(line[3].strip())
-            all_vhelios.append(float(line[5].strip()))
+            #all_vhelios.append(float(line[5].strip()))
             all_files[line[3].strip()] = line[2].strip()
             all_vbary[line[3].strip()] = float(line[-1].strip())/1000 #correcting from m/s to km/s
 
@@ -73,7 +73,7 @@ start_order = 35
 end_order = 60
 
 for ID in all_IDs:
-    if ID == 'KIC-4914923':
+    if ID == 'KIC4914923':
         data, no_orders, bjd, vhelio, star, date, exp = shazam.FIES_caliber(all_files[f'{date}'])
         for i in np.arange(start_order,end_order,1):
             #Pick out correct wl range
