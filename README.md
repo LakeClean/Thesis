@@ -1,7 +1,6 @@
 # Thesis
 Repository for my thesis work
 
-
 #Pipeline for NOT data:
 - The ordered files are downloaded and called reduced*.zip. Should be in Downloads      |By Hand|
 - Note the date of the oldest of these for later use in analyse_spectra                 |By Hand|

@@ -32,6 +32,12 @@ def add_value(value,key,ID):
     dat.replace_column(name=key,col = new_col)
     dat.write(table_path,format='ascii',overwrite=True)
 
+def get_value(key,ID):
+    dat = Table.read(table_path,format='ascii')
+    ID_col = dat['ID'].data
+    value_list = dat[key].data
+    index = np.where(ID_col == ID)[0]
+    return value_list[index][0]
 
 
 def new_column(key,col_type='object',index=-1,desc=''):
@@ -46,7 +52,8 @@ def new_column(key,col_type='object',index=-1,desc=''):
     f.write(lines)
     f.write(f'{key}: {desc}\n')
     f.close()
-        
+
+
     
 
 def get_table():

@@ -56,7 +56,7 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
         - fit_params SB2 : [K1_guess,K2_guess, e_guess, w_guess,period_guess, v0_guess]
     '''
 
-
+    
     df = pd.read_csv(f'/home/lakeclean/Documents/speciale/rv_data/NOT_{ID}.txt')
     rv_names = ['jd','date','rv1','rv2','e_rv1','e_rv2','vbary']
     epoch_rv1s = df['rv1'].to_numpy()
@@ -66,7 +66,18 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
     epoch_jds = df['jd'].to_numpy()- 2457000 #The correction Frank likes
     epoch_dates = df['date'].to_numpy()
     epoch_vbary = df['vbary'].to_numpy()
-    #epoch_vhelio = df['vhelio'].to_numpy()
+
+    try:
+        df = pd.read_csv(f'/home/lakeclean/Documents/speciale/rv_data/NOT_{ID}.txt')
+        NOT_rv1s = df['rv1'].to_numpy()
+        NOT_rv2s = df['rv2'].to_numpy()
+        NOT_rv1_errs = df['e_rv1'].to_numpy()
+        NOT_rv2_errs = df['e_rv2'].to_numpy()
+        NOT_jds = df['jd'].to_numpy()- 2457000 #The correction Frank likes
+        NOT_dates = df['date'].to_numpy()
+        NOT_vbary = df['vbary'].to_numpy()
+    except:
+        pass
 
     try:
         df = pd.read_csv(f'/home/lakeclean/Documents/speciale/rv_data/TNG_{ID}.txt')
@@ -77,6 +88,15 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
         TNG_jds = df['jd'].to_numpy() - 2457000 #The correction Frank likes
         TNG_dates = df['date'].to_numpy()
         TNG_vbary = df['vbary'].to_numpy()
+
+        epoch_rv1s = np.append(epoch_rv1s,TNG_rv1s,axis=0)
+        epoch_rv2s = np.append(epoch_rv2s,TNG_rv2s,axis=0)
+        epoch_rv1_errs = np.append(epoch_rv1_errs,TNG_rv1_errs,axis=0)
+        epoch_rv2_errs = np.append(epoch_rv2_errs,TNG_rv2_errs,axis=0)
+        epoch_jds = np.append(epoch_jds,TNG_jds,axis=0)
+        epoch_dates = np.append(epoch_dates,TNG_dates,axis=0)
+        epoch_vbary = np.append(epoch_vbary,TNG_vbary,axis=0)
+        
     except:
         pass
 
@@ -89,6 +109,14 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
         NOT_old_HIRES_jds = df['jd'].to_numpy()- 2457000 #The correction Frank likes
         NOT_old_HIRES_dates = df['date'].to_numpy()
         NOT_old_HIRES_vbary = df['vbary'].to_numpy()
+        
+        epoch_rv1s = np.append(epoch_rv1s,NOT_old_HIRES_rv1s,axis=0)
+        epoch_rv2s = np.append(epoch_rv2s,NOT_old_HIRES_rv2s,axis=0)
+        epoch_rv1_errs = np.append(epoch_rv1_errs,NOT_old_HIRES_rv1_errs,axis=0)
+        epoch_rv2_errs = np.append(epoch_rv2_errs,NOT_old_HIRES_rv2_errs,axis=0)
+        epoch_jds = np.append(epoch_jds,NOT_old_HIRES_jds,axis=0)
+        epoch_dates = np.append(epoch_dates,NOT_old_HIRES_dates,axis=0)
+        epoch_vbary = np.append(epoch_vbary,NOT_old_HIRES_vbary,axis=0)
     except:
         pass
 
@@ -101,10 +129,37 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
         NOT_old_LOWRES_jds = df['jd'].to_numpy()- 2457000 #The correction Frank likes
         NOT_old_LOWRES_dates = df['date'].to_numpy()
         NOT_old_LOWRES_vbary = df['vbary'].to_numpy()
+
+        epoch_rv1s = np.append(epoch_rv1s,NOT_old_LOWRES_rv1s,axis=0)
+        epoch_rv2s = np.append(epoch_rv2s,NOT_old_LOWRES_rv2s,axis=0)
+        epoch_rv1_errs = np.append(epoch_rv1_errs,NOT_old_LOWRES_rv1_errs,axis=0)
+        epoch_rv2_errs = np.append(epoch_rv2_errs,NOT_old_LOWRES_rv2_errs,axis=0)
+        epoch_jds = np.append(epoch_jds,NOT_old_LOWRES_jds,axis=0)
+        epoch_dates = np.append(epoch_dates,NOT_old_LOWRES_dates,axis=0)
+        epoch_vbary = np.append(epoch_vbary,NOT_old_LOWRES_vbary,axis=0)
     except:
         pass
-    
-    
+
+    try:
+        df = pd.read_csv(f'/home/lakeclean/Documents/speciale/rv_data/KECK_{ID}.txt')
+        KECK_vbary = df['vbary'].to_numpy()
+        KECK_rv1s = df['rv1'].to_numpy() - KECK_vbary
+        KECK_rv2s = df['rv2'].to_numpy() - KECK_vbary
+        KECK_rv1_errs = df['e_rv1'].to_numpy()
+        KECK_rv2_errs = df['e_rv2'].to_numpy()
+        KECK_jds = df['jd'].to_numpy() - 2457000 #The correction Frank likes
+        KECK_dates = df['date'].to_numpy()
+        '''
+        epoch_rv1s = np.append(epoch_rv1s,KECK_rv1s,axis=0)
+        epoch_rv2s = np.append(epoch_rv2s,KECK_rv2s,axis=0)
+        epoch_rv1_errs = np.append(epoch_rv1_errs,KECK_rv1_errs,axis=0)
+        epoch_rv2_errs = np.append(epoch_rv2_errs,KECK_rv2_errs,axis=0)
+        epoch_jds = np.append(epoch_jds,KECK_jds,axis=0)
+        epoch_dates = np.append(epoch_dates,KECK_dates,axis=0)
+        epoch_vbary = np.append(epoch_vbary,KECK_vbary,axis=0)
+        '''
+    except:
+        pass
 
 
     #Plotting the radial velocity:
@@ -162,6 +217,19 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
                        fmt='o',capsize=2,color='purple',label='old NOT')
         except:
             pass
+
+        try:
+            ax[0].errorbar(KECK_jds, KECK_rv1s, KECK_rv1_errs,
+                       fmt='o',capsize=2,color='pink')
+            ax[0].errorbar(KECK_jds, KECK_rv2s, KECK_rv2_errs,
+                       fmt='o',capsize=2,color='pink',label='KECK')
+        except:
+            pass
+
+        ax[0].errorbar(V_litt_time, V_litt, e_V_litt,
+                   fmt='o',capsize=2,color='red',label='SIMBAD: GAIA/APOGEE')
+        ax[0].scatter(-1190.4594305553474,-32.545914715462075,
+                      label='2.dary component', color='black')
             
 
     else:
@@ -194,10 +262,20 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
         except:
             pass
 
+        try:
+            ax[0].errorbar(KECK_jds, KECK_rv1s, KECK_rv1_errs,
+                       fmt='o',capsize=2,color='pink')
+            #ax[0].errorbar(KECK_jds, KECK_rv2s-KECK_vbary, KECK_rv2_errs,
+             #          fmt='o',capsize=2,color='pink',label='KECK')
+        except:
+            pass
+
         ax[0].errorbar(V_litt_time, V_litt, e_V_litt,
                    fmt='o',capsize=2,color='red',label='SIMBAD: GAIA/APOGEE')
         ax[0].scatter(-1190.4594305553474,-32.545914715462075,
                       label='2.dary component', color='black')
+
+        
 
     ax[0].legend()
 
@@ -220,6 +298,9 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
         p = fit.params['p'].value
         t0 = fit.params['t0'].value
         v0 = fit.params['v0_1'].value
+        print(fit.params)
+        print(fit.covar)
+        
         covar = np.diag(fit.covar)
         e_k = np.sqrt(covar[0])
         e_e = np.sqrt(covar[1])
@@ -781,11 +862,10 @@ if False:
 
 #KIC10454113
 if True:
-    plot_rv_time('KIC10454113',fit_params=[],limits=[20,60],SB_type=1,
+    plot_rv_time('KIC10454113',fit_params=[16,0.8,100,6000,-20],SB_type=1,
                  orbital_period=100, show_plot=True,save_plot=True, report_fit=True,
                  make_phase_plot=False,make_river_plot=False, scale_river=[-0.0005,0.08,100],
-                 make_table=True,
-                 find_rv=False)
+                 make_table=True,exclude_points=0)
 
 '''
 #KIC4457331

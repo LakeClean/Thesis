@@ -7,11 +7,13 @@ import numpy as np
 import glob
 import shazam
 from astropy.time import Time
+from PyAstronomy import pyasl #For converting from vacuum to air
+
 
 #Plotting the templates to compare them
 
-#Old template from idk where:
-'''
+#Old template from arcturus where:
+
 fig,ax =plt.subplots()
 template_dir = '/home/lakeclean/Documents/speciale/templates/ardata.fits'
 template_data = pyfits.getdata(f'{template_dir}')
@@ -27,11 +29,29 @@ print(df.keys())
 
 df = df.to_numpy()
 
-#plt.plot(10**(8)/df[:,0],df[:,1],color='r',label='(Reiners, 2016)')
+plt.plot(pyasl.vactoair2(10**(8)/df[:,0]),df[:,1],color='r',label='(Reiners, 2016)')
 ax.plot(twl,tfl_MS,color='b')
 #plt.show()
-'''
 
+
+#new templates from Phoenix:
+
+phoenix_templates = '/home/lakeclean/Documents/speciale/templates/phoenix/'
+wl = pyfits.getdata(phoenix_templates + 'WAVE_PHOENIX-ACES-AGSS-COND-2011.fits')
+fl = pyfits.getdata(phoenix_templates + 'lte04700-3.00-0.0.PHOENIX-ACES-AGSS-COND-2011-HiRes.fits')
+
+idx = np.where( (wl>3000) & (wl <16900))[0]
+wl = pyasl.vactoair2(wl[idx])
+fl = fl[idx]
+
+fig,ax = plt.subplots()
+for i in range(100):
+    i = i*100
+    tmp_idx = np.where( ((wl[0] + i )<wl) & ((wl[0] + i +100 )>wl))[0]
+    nwl, nfl = shazam.normalize(wl[tmp_idx],fl[tmp_idx],gauss=False)
+    ax.plot(nwl,nfl)
+    #ax.plot(wl[tmp_idx],fl[tmp_idx])
+plt.show()
 
 
 #Comparing the values found by me and those from Gaia:
@@ -340,7 +360,7 @@ for log in logs:
 
 
 #Plotting the BF of KIC10454113 to show the SB2 nature
-
+'''
 path = '/home/lakeclean/Documents/speciale/target_analysis/KIC10454113/*'
 path = '/home/lakeclean/Documents/speciale/target_analysis/KIC4914923/*'
 folders = glob.glob(path)
@@ -398,7 +418,7 @@ plt.show()
 save_path='/home/lakeclean/Documents/speciale/random_plots/'
 save_path += 'KIC10454113_old_NOT_SB2_BFs.pdf'
 fig.savefig(save_path,dpi='figure', format='pdf')
-  
+'''
 
 
 

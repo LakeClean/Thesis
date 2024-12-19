@@ -11,34 +11,26 @@ from astropy.time import Time
 import make_table_of_target_info as mt
 from PyAstronomy import pyasl #For converting from vacuum to air
 
-#import template
+
+
+#### importing templates ####
+
+#RGB from ardata
 template_dir = '/home/lakeclean/Documents/speciale/templates/ardata.fits'
 template_data = pyfits.getdata(f'{template_dir}')
-tfl_RG = template_data['arcturus']
+arcturus_tfl_RG = template_data['arcturus']
+arcturus_twl = template_data['wavelength']
 tfl_MS = template_data['solarflux']
-twl = template_data['wavelength']
 
 
-#fig, ax  = plt.subplots()
-#ax.plot(twl,tfl_MS)
-#plt.show()
 
-#import the RGB info
-'''
-lines = open('/home/lakeclean/Documents/speciale/NOT/Target_names_and_info.txt').read().split('\n')[1:14]
-all_target_names = [] # Just a list of the names
-RGBs = [] # names of known RGB stars
-for line in lines:
-    line = line.split()
-    all_target_names.append(line[0])
-
-    if len(line)>5: #noting the RG stars
-        if line[5]=='(RGB)':
-            RGBs.append(line[0])
-'''
+#import the global info
 tab = mt.get_table()
 all_target_names = tab['ID'].data # Just a list of the names
-RGBs = tab['star_type'].data # names of known RGB stars
+#RGBs = tab['star_type'].data # names of known RGB stars
+#Teffs = tab['Teff'].data #Effective temperature [K]
+#loggs = tab['loggs'].data
+#FeHs = tab['Fe/H'].data
 
 def analyse_spectrum(folder,target_name, template='MS',start_order=1, append_to_log=False,
                      
@@ -109,53 +101,65 @@ def analyse_spectrum(folder,target_name, template='MS',start_order=1, append_to_
             - resample and flip spectrum and template with shazam.resample
             -
     '''
+    
+    #Importing data for the specific epoch:
     files = glob.glob(f'{folder}/*')
-    files.sort()
+    def file_sorter(file):
+        ccd = int(file.split('_')[2])
+        order = int(file.split('_')[3])
+        return (ccd,order)
+    
+    files.sort(key=file_sorter)
+
     no_orders = len(files)
-    
-    #data, no_orders, bjd, vhelio, star, date, exp = shazam.FIES_caliber(file)
-    
-    #header = pyfits.getheader(file)
 
     epoch_name = target_name #name of target
     epoch_date = folder[-10:]  #date of fits creation
-    #epoch_Vhelio = header['VHELIO'] # heliocentric velocity
     print(epoch_name, epoch_date)
-    
-    if epoch_name in RGBs:
-        tfl = tfl_RG
-    else:
-        tfl = tfl_MS
-
+    #Path for the reduced data:
     path = '/home/lakeclean/Documents/speciale/target_analysis/' + epoch_name +'/' + epoch_date
         
-
-    
-
     #######################################################################
     def save_datas(datas,labels,title):
         f = open(path + f"/data/{title}.txt",'w')
         result1 = ''
         for i in labels:
             result1 += f'{i},'
-            
+                
         f.write(f'{result1[:-1]}\n')
-        
+            
         for i in range(len(datas[0])):
             result2 = ''
             for j in range(len(datas)):
                 result2 += f'{datas[j][i]},'
             f.write(f'{result2[:-1]}\n')
-            
+                
         f.close()
+        
+    def correct_logg(x):
+        test = x%0.5
+        if test >=0.25:
+            return x + 0.5 - test
+        else:
+            return x -test
     ########################################################################
 
 
-    
+    #Selcting the appropiate template:
+    if mt.get_value('star_type',target_name) == 'RGB':
+        tfl = arcturus_tfl_RG
+        twl = arcturs_twl
+    else:
+        Teff = int(np.round(float(mt.get_value('Teff',target_name)),-2))
+        logg = correct_logg(float(mt.get_value('logg',target_name)))
+        FeH = mt.get_value('Fe/H',target_name)
+        templates_path = '/home/lakeclean/Documents/speciale/templates/phoenix/*'
+        tfl = tfl_MS
+        twl = arcturus_twl
+        
+
         
     #Raw spectrum is plotted
-    
-    
     fig, ax = plt.subplots()
     for order in files:
         
@@ -205,9 +209,18 @@ def analyse_spectrum(folder,target_name, template='MS',start_order=1, append_to_
 
     slopes = np.zeros(no_orders) 
     bin_wls = np.zeros(no_orders)
+    ccds = np.zeros(no_orders) #KECK data has inconsistent amount of orders
+    orders = np.zeros(no_orders) 
 
-    for i in np.arange(start_order,no_orders,1):
+    for i in np.arange(0,no_orders,1):
 
+        #find the order of the file:
+        ccd = int(files[i].split('_')[2])
+        order = int(files[i].split('_')[3])
+        ccds[i] = ccd
+        orders[i] = order
+
+        
         #Pick out correct wl range
         z = pyfits.getdata(files[i]) 
         wl, fl = z['wave'],z['flux']
@@ -217,11 +230,12 @@ def analyse_spectrum(folder,target_name, template='MS',start_order=1, append_to_
 
         #Check if template does not cover spectrum:
         if wl[0] < twl[0]:
-            print(f'order {i} was outside template:', wl[0], twl[0])
+            print(f'ccd {ccd}, order {order} was outside template:', wl[0], twl[0])
             continue
         
+        
         if save_data: save_datas([wl,fl],['wavelength [Å]', 'flux (raw)'],
-                                 f"order_{i}_raw_spectrum")
+                                 f"order_{order}_ccd_{ccd}_raw_spectrum")
         
         if np.mean(fl)<0.001: print('flux is very low') 
 
@@ -232,7 +246,7 @@ def analyse_spectrum(folder,target_name, template='MS',start_order=1, append_to_
         nfl = nfl / np.median(nfl[np.where(np.percentile(nfl,95)<nfl)[0]])#The flux of the normalized flux that is above 95% percentile
         
         if save_data: save_datas([nwl,nfl],['wavelength [Å]', 'flux (norm)'],
-                                 f"order_{i}_normalized")
+                                 f"order_{order}_ccd_{ccd}_normalized")
         epoch_nwls.append(nwl)
         epoch_nfls.append(nfl)
 
@@ -254,7 +268,7 @@ def analyse_spectrum(folder,target_name, template='MS',start_order=1, append_to_
                                  ['wavelength(resampled) [Å]',
                                   'flux (resampled and flipped)',
                                   'template flux (resampled and flipped)']
-                                  ,f"order_{i}_resampled_flipped")
+                                  ,f"order_{order}_ccd_{ccd}_resampled_flipped")
         epoch_rf_wls.append(r_wl)
         epoch_rf_fls.append(rf_fl)
         epoch_rf_tfls.append(rf_tl)
@@ -309,7 +323,7 @@ def analyse_spectrum(folder,target_name, template='MS',start_order=1, append_to_
             if save_data: save_datas([rvs,bf,bfgs,model],
                                      ['wavelength [km/s]', 'broadening function',
                                       'smoothed_bf', 'Fitted model'],
-                                     f"order_{i}_broadening_function")
+                                     f"order_{order}_ccd_{ccd}_broadening_function")
         
         # Plotting for every bin:
         if show_bin_plots:
@@ -359,12 +373,12 @@ def analyse_spectrum(folder,target_name, template='MS',start_order=1, append_to_
             plt.show()
             plt.close()
             
-    if save_data: save_datas([epoch_vrad1, epoch_vrad2,epoch_ampl1, epoch_ampl2,
+    if save_data: save_datas([bin_wls, epoch_vrad1, epoch_vrad2,epoch_ampl1, epoch_ampl2,
                                   epoch_vsini1, epoch_vsini2, epoch_gwidth, epoch_limbd,
-                                  epoch_const],
-                                     ['epoch_vrad1', 'epoch_vrad2','epoch_ampl1', 'epoch_ampl2',
+                                  epoch_const,ccds,orders],
+                                     ['bin_wls', 'epoch_vrad1', 'epoch_vrad2','epoch_ampl1', 'epoch_ampl2',
                                   'epoch_vsini1', 'epoch_vsini2', 'epoch_gwidth', 'epoch_limbd',
-                                  'epoch_const'],
+                                  'epoch_const','ccd','order'],
                                      f"bf_fit_params")
 
     # Plotting bfs or ccfs together:
@@ -508,10 +522,10 @@ folder_paths.sort()
 
 
 for folder in folder_paths:
-    date = folder.split('/')[-1]
+    #date = folder.split('/')[-1]
     
     #if ID == 'KIC12317678':
-    if date == '2017-07-08':
+    #if date == '2017-07-08':
         #if Time(date).jd > 2460640:
             #print(f'Spectrum: {k}/{len(files)}, Time: {time()-time1}s')
             time1 = time()
@@ -520,7 +534,7 @@ for folder in folder_paths:
             show_bin_plots=False
             save_data=True
             save_plots=False
-            show_plots=True
+            show_plots=False
             rotbf_fit_print_report=False
             target_name = 'KIC10454113'
             analyse_spectrum(folder,target_name =target_name, SB_type = 1, start_order=start_order,

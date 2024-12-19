@@ -14,7 +14,7 @@ import make_table_of_target_info as mt
 
 
 #f'/home/lakeclean/Documents/speciale/TNG_merged_file_log.txt'
-def find_rv_time(ID,log_path,data_type, limits=[0,-1],plot_offset=True):
+def find_rv_time(ID,log_path,data_type,plotting=True,ask_for_limits=True):
     '''
     Function for plotting the radial velocity plot.
     Parameters:
@@ -27,10 +27,6 @@ def find_rv_time(ID,log_path,data_type, limits=[0,-1],plot_offset=True):
         prints resulting rv estimate for each epoch to file
 
     '''
-    data_types = ['NOT', 'NOT_old_HIRES', 'NOT_old_LOWRES', 'TNG', 'KECK']
-    if data_type not in data_types:
-        print(f'The given data_type is not in {data_types}')
-        return 0
     
     if True:
         path = log_path
@@ -39,19 +35,6 @@ def find_rv_time(ID,log_path,data_type, limits=[0,-1],plot_offset=True):
         all_dates = df['date'].to_numpy()
         files = df['directory'].to_numpy()
         all_vbary = df['v_bary'].to_numpy()/1000
-        '''
-        lines= open(path).read().split('\n')
-        all_IDs, all_dates,files= [], [], []
-        all_vbary = {}
-        for line in lines[1:-1]:
-            line = line.split(',')
-            if line[2].strip() not in all_dates: #Skipping duplicates
-                    all_IDs.append(line[0].strip())
-                    all_dates.append(line[2].strip())
-                    #all_vhelios.append(float(line[5].strip()))
-                    files.append(line[1].strip())
-                    all_vbary[line[2].strip()] = float(line[-2].strip())/1000 #correcting from m/s to km/s
-        '''
             
         def fit_line(x,y):
             fit = fitting.LinearLSQFitter()
@@ -62,118 +45,11 @@ def find_rv_time(ID,log_path,data_type, limits=[0,-1],plot_offset=True):
             new_x = np.linspace(min(x),max(x),10)
             return x,fitted_line(x),slope
 
-        #Finding the number of bins:
-        lines = open(f'/home/lakeclean/Documents/speciale/target_analysis/'+ f'{all_IDs[0]}/{all_dates[0]}/data/bf_fit_params.txt').read().split('\n')[1:-1]
-        n_bins = len(lines)
+        lines = open(f'/home/lakeclean/Documents/speciale/target_analysis/'+
+                     f'{all_IDs[0]}/{all_dates[0][:len("2017-06-04")]}/data/bf_fit_params.txt').read().split('\n')[1:]
         print(f'Analyzing target: {ID}')
         print(f'Using the logfile: {log_path}')
         print(f'RV-data will be saved as: "/home/lakeclean/Documents/speciale/rv_data/{data_type}_{ID}.txt" ')
-        print(f'Number of bins: {n_bins}')
-
-        rvs = np.zeros(shape= (len(files),4))
-        jds = np.zeros(len(files))
-        offset1s = np.zeros(shape= (len(files),n_bins))
-        offset2s = np.zeros(shape= (len(files),n_bins))
-        offsets = np.zeros(shape= (len(files),n_bins))
-        
-        vrad1s = np.zeros(shape= (len(files),n_bins))
-        vrad2s= np.zeros(shape= (len(files),n_bins))
-        ampl1s= np.zeros(shape= (len(files),n_bins))
-        ampl2s= np.zeros(shape= (len(files),n_bins))
-        vsini1s= np.zeros(shape= (len(files),n_bins))
-        vsini2s= np.zeros(shape= (len(files),n_bins))
-        gwidths= np.zeros(shape= (len(files),n_bins))
-        limbds= np.zeros(shape= (len(files),n_bins))
-        consts= np.zeros(shape= (len(files),n_bins))
-        
-
-        flux_levels = []
-        #Going through each file
-        for i,date in enumerate(all_dates):
-            path = f'/home/lakeclean/Documents/speciale/target_analysis/'+ f'{all_IDs[i]}/{date}/data/bf_fit_params.txt'
-            date = all_dates[i]
-            jds[i] = Time(date).jd #Correcting jd the way Frank likes. Something to with Tess.
-            v_bary = all_vbary[i]
-
-            try:
-                lines = open(path).read().split('\n')
-            except:
-                print(f'{path} could not be found')
-                continue
-            
-                
-            #Going through each bin
-            for j,line in enumerate(lines[1:-1]):
-                line  =line.split(',')
-                ampl1 = float(line[2])
-                ampl2 = float(line[3])
-                vrad1 =float(line[0]) 
-                vrad2 = float(line[1])
-                vsini1 = float(line[4])
-                vsini2 = float(line[5])
-                gwidth =float(line[6])
-                limbd =float(line[7])
-                const =float(line[8])
-
-                vel = np.linspace(-200,200,1000)
-                peak1 = max(shazam.rotbf_func(vel,ampl1,vrad1,vsini1,gwidth,const,limbd))
-                peak2 = max(shazam.rotbf_func(vel,ampl2,vrad2,vsini2,gwidth,const,limbd))
-
-                #Picking the maximum of the BFs as 1st component
-                if peak1 < peak2:
-                    ampl1s[i,j] = ampl2
-                    ampl2s[i,j] = ampl1
-                    vrad1s[i,j] =vrad2 + v_bary
-                    vrad2s[i,j] = vrad1 + v_bary
-                    vsini1s[i,j] = vsini2
-                    vsini2s[i,j] = vsini1
-                    gwidths[i,j] =gwidth
-                    limbds[i,j] =limbd
-                    consts[i,j] =const
-                    
-                else:
-                    ampl1s[i,j] = ampl1
-                    ampl2s[i,j] = ampl2
-                    vrad1s[i,j] =vrad1 + v_bary
-                    vrad2s[i,j] = vrad2 + v_bary
-                    vsini1s[i,j] = vsini1
-                    vsini2s[i,j] = vsini2
-                    gwidths[i,j] =gwidth
-                    limbds[i,j] =limbd
-                    consts[i,j] =const
-                    
-
-
-            offset1s[i,:] = np.median(vrad1s[i]) - vrad1s[i]
-            offset2s[i,:] = np.median(vrad2s[i]) - vrad2s[i]
-
-            spectral_type = 1
-            for k, j in zip(vrad1s[i],vrad2s[i]):
-                if k==j:
-                    pass
-                else:
-                    spectral_type=2
-                    break
-                
-            if spectral_type == 1: #Checking if all rads are the same for both components i.e. SB1.
-                offsets[i,:] = offset1s[i,:]
-            if spectral_type == 2:
-                offsets[i,:] = offset1s[i,:]
-                offsets = np.append(offsets,[offset2s[i,:]],axis=0)
-            
-                
-        #The offset for each order based on every file  
-        offsets_median = np.median(offsets,axis=0)
-        if plot_offset:
-            fig,ax = plt.subplots()
-            for i in range(len(vrad1s[:,0])):
-                ax.scatter(range(len(offsets[i,:])),offsets[i,:])
-
-            plt.show()
-            plt.close()
-        
-        weight1s = np.std(offsets,axis=0)
-        weight2s = np.std(offsets,axis=0) #Relic of before offsets were evaluated on the same basis
 
         epoch_rv1s = []
         epoch_rv2s = []
@@ -191,73 +67,175 @@ def find_rv_time(ID,log_path,data_type, limits=[0,-1],plot_offset=True):
         epoch_ampl1s = []
         epoch_ampl2s = []
         epoch_consts = []
-        
+
+        ccd_order_offsets = {}
+        #plotting all of the vrads - median(vrads) to see systematic offset
+        fig, ax = plt.subplots()
         for i,all_ID in enumerate(all_IDs):
+                
+            date = all_dates[i]
+            print(date)
+            path = f'/home/lakeclean/Documents/speciale/target_analysis/'
+            path+= f'{all_IDs[i]}/{date[:len("2017-06-04")]}/data/bf_fit_params.txt'
+            v_bary = all_vbary[i]
+            
+            #importing the values determined in analyse step
+            df = pd.read_csv(path)
+            bin_wls = df['bin_wls'].to_numpy()
+            vrad1s = df['epoch_vrad1'].to_numpy() + v_bary
+            vrad2s = df['epoch_vrad2'].to_numpy() + v_bary
+            ccds = df['ccd'].to_numpy()
+            orders = df['order'].to_numpy()
+
+            #### Finding offset model of data: ####
+            for i in range(len(bin_wls)):
+                try: #Adding to dictionary of ccd and orders
+                    ccd_order_offsets[(ccds[i],orders[i])] = ccd_order_offsets[(ccds[i],orders[i])] +  [ vrad1s[i] - np.median(vrad1s)]
+                    if vrad1s[i] != vrad2s[i]:
+                            ccd_order_offsets[(ccds[i],orders[i])] = ccd_order_offsets[(ccds[i],orders[i])] + [vrad2s[i] - np.median(vrad2s)]
+                except:
+                    ccd_order_offsets[(ccds[i],orders[i])] = [vrad1s[i] - np.median(vrad1s)]
+                    if vrad1s[i] != vrad2s[i]:
+                        ccd_order_offsets[(ccds[i],orders[i])] = ccd_order_offsets[(ccds[i],orders[i])] + [vrad2s[i] - np.median(vrad2s)]
+
+            #We plot the vrad to determine where the range is good:
+            ax.scatter(bin_wls,vrad1s - np.median(vrad1s[10:30]))
+            ax.scatter(bin_wls,vrad2s - np.median(vrad2s[10:30]))
+            ax.set_xlabel('middle of wavelength range [Å]')
+            ax.set_ylabel('Radial velocity [km/s]')
+            ax.set_title(f'vrads offset by median to show systematics')  
+
+        if plotting: plt.show()
+        plt.close()
+
+        # Finding the proper median offset for each order and ccd
+        ccd_order_weights = {}
+        for i in ccd_order_offsets:
+            ccd_order_weights[i] = np.std(ccd_order_offsets[i])
+            ccd_order_offsets[i] = np.median(ccd_order_offsets[i])
+            
+        
+        #Plotting the individual vrad for each epoch to see where it is good and if the offset helps
+        for i,all_ID in enumerate(all_IDs):
+            
             if not ID == all_ID:
                 continue
+            
+            date = all_dates[i]
+            path = f'/home/lakeclean/Documents/speciale/target_analysis/'
+            path+= f'{all_IDs[i]}/{date[:len("2017-06-04")]}/data/bf_fit_params.txt'
+            jd = Time(date).jd #Correcting jd the way Frank likes. Something to with Tess.
+            v_bary = all_vbary[i]
+            epoch_jds.append(jd)
 
+            #importing the values determined in analyse step
+            df = pd.read_csv(path)
+            vrad1s = df['epoch_vrad1'].to_numpy() + v_bary
+            vrad2s = df['epoch_vrad2'].to_numpy() + v_bary
+            ampl1s = df['epoch_ampl1'].to_numpy()
+            ampl2s = df['epoch_ampl2'].to_numpy()
+            vsini1s = df['epoch_vsini1'].to_numpy()
+            vsini2s = df['epoch_vsini2'].to_numpy()
+            gwidths = df['epoch_gwidth'].to_numpy()
+            limbds = df['epoch_limbd'].to_numpy()
+            consts = df['epoch_const'].to_numpy()
+            ccds = df['ccd'].to_numpy()
+            orders = df['order'].to_numpy()
+            bin_wls = df['bin_wls'].to_numpy()
+
+            corr_vrad1s = df['epoch_vrad1'].to_numpy() + v_bary
+            corr_vrad2s = df['epoch_vrad2'].to_numpy() + v_bary
+            weights = []
+            #making corrected vrad:
+            for j in range(len(ccds)):
+                corr_vrad1s[j] -= ccd_order_offsets[(ccds[j],orders[j])]
+                corr_vrad2s[j] -= ccd_order_offsets[(ccds[j],orders[j])]
+                weights.append(ccd_order_weights[(ccds[j],orders[j])])
+            weights = np.array(weights)         
+
+
+            #We plot the vrad to determine where the range is good:
+            if plotting:
+                fig, ax  = plt.subplots()
+                ax.scatter(bin_wls,vrad1s,label='primary')
+                ax.scatter(bin_wls,vrad2s,label='secondary')
+                ax.scatter(bin_wls,corr_vrad1s,label='corrected primary')
+                ax.set_xlabel('middle of wavelength range [Å]')
+                ax.set_ylabel('Radial velocity [km/s]')
+                ax.set_title(f'ID: {ID}, date: {date}')
+                ax.legend()
+                plt.show()
+
+
+            #Stating what wavelength range is good
+            limit_path = f'/home/lakeclean/Documents/speciale/target_analysis/'
+            limit_path += f'{all_IDs[i]}/{date[:len("2017-06-04")]}/data/limits.txt'
+            if ask_for_limits:
+                
+                try:
+                    start = int(input('input integer start wl: '))
+                    end = int(input('input integer end wl: '))
+                    f = open(limit_path, 'w')
+                    f.write('start,end\n')
+                    f.write(f'{start},{end}')
+                    f.close()
+                except:
+                    print('You inputed something that is not an integer!')
+                    start = int(input('input integer start wl: '))
+                    end = int(input('input integer end wl: '))
+                    f = open(limit_path, 'w')
+                    f.write('start,end\n')
+                    f.write(f'{start},{end}')
+                    f.close()
+            else:
+                df = pd.read_csv(limit_path)
+                start = df['start'].to_numpy()[0]
+                end = df['end'].to_numpy()[0]
+                print(f'The prechosen limits are: [{start},{end}]')
+                
+            
+                
+            #Index inside the specified good range
+            idx = np.where( (bin_wls <end) & (bin_wls >start))[0]
+            
             #We choose the vsini as the mean of the order vsini's that lie in good range:
-            mean_vsini1 = np.mean(vsini1s[i][limits[0]:limits[1]])
-            err_vsini1 = np.std(vsini1s[i][limits[0]:limits[1]])/len(vsini1s[i][limits[0]:limits[1]])
-            mean_vsini2 = np.mean(vsini2s[i][limits[0]:limits[1]])
-            err_vsini2 = np.std(vsini2s[i][limits[0]:limits[1]])/len(vsini2s[i][limits[0]:limits[1]])
+            mean_vsini1 = np.mean(vsini1s[idx])
+            err_vsini1 = np.std(vsini1s[idx])/len(vsini1s[idx])
+            mean_vsini2 = np.mean(vsini2s[idx])
+            err_vsini2 = np.std(vsini2s[idx])/len(vsini2s[idx])
+            
             epoch_vsini1s.append(mean_vsini1)
             epoch_vsini2s.append(mean_vsini2)
             epoch_vsini1_errs.append(err_vsini1)
             epoch_vsini2_errs.append(err_vsini2)
 
             
-            epoch_gwidths.append(np.median(gwidths[i][limits[0]:limits[1]]))
-            epoch_limbds.append(np.median(limbds[i][limits[0]:limits[1]]))
-            epoch_ampl1s.append(np.median(ampl1s[i][limits[0]:limits[1]]))
-            epoch_ampl2s.append(np.median(ampl2s[i][limits[0]:limits[1]]))
-            epoch_consts.append(np.median(consts[i][limits[0]:limits[1]]))
+            epoch_gwidths.append(np.median(gwidths[idx]))
+            epoch_limbds.append(np.median(limbds[idx]))
+            epoch_ampl1s.append(np.median(ampl1s[idx]))
+            epoch_ampl2s.append(np.median(ampl2s[idx]))
+            epoch_consts.append(np.median(consts[idx]))
             
-            
-            epoch_dates.append(all_dates[i])
-            epoch_vbary.append(all_vbary[i])
+            epoch_dates.append(date)
+            epoch_vbary.append(v_bary)
 
-            #Correcting vrads for NOT wavelength issue
-            corr_vrad1s = vrad1s[i]+offsets_median
-            corr_vrad2s = vrad2s[i]+offsets_median
 
             #Selecting the best region of orders
-            corr_vrad1s = corr_vrad1s[limits[0]:limits[1]]
-            corr_vrad2s = corr_vrad2s[limits[0]:limits[1]]
-            corr_weight1s = weight1s[limits[0]:limits[1]]
-            corr_weight2s = weight2s[limits[0]:limits[1]]
-
-            #picking out outliers
-            good_vrad1s = []
-            good_vrad2s = []
-            good_weight1s = []
-            good_weight2s = []
-            for y1,y2,w1,w2 in zip(corr_vrad1s,corr_vrad2s,corr_weight1s,corr_weight2s):
-                
-                outlier_limit = 5
-                temp_median1 = np.median(corr_vrad1s)
-                temp_median2 = np.median(corr_vrad2s)
-
-                if abs(y1 - temp_median1) < outlier_limit:
-                    good_vrad1s.append(y1)
-                    good_weight1s.append(w1)
-
-                if abs(y2 - temp_median2) < outlier_limit:
-                    good_vrad2s.append(y2)
-                    good_weight2s.append(w2)
+            corr_vrad1s = corr_vrad1s[idx]
+            corr_vrad2s = corr_vrad2s[idx]
+            weights = weights[idx]
 
             #normalized weights
-            epoch_norm_weight1s = np.array(good_weight1s) / sum(np.array(good_weight1s))
-            epoch_norm_weight2s = np.array(good_weight2s) / sum(np.array(good_weight2s))
-
+            norm_weights = weights / sum(weights)
+           
             #Weighted mean
-            epoch_rv1s.append(sum(np.array(good_vrad1s)*epoch_norm_weight1s))
-            epoch_rv2s.append(sum(np.array(good_vrad2s)*epoch_norm_weight2s))
+            epoch_rv1s.append(sum(corr_vrad1s*norm_weights))
+            epoch_rv2s.append(sum(corr_vrad2s*norm_weights))
 
             #standard err of weighted mean from unc propagation        
-            epoch_rv1_errs.append(np.std(good_vrad1s)*np.sqrt(sum(epoch_norm_weight1s**2)))#append(np.std(good_vrad1s)/np.sqrt(len(good_vrad1s)))
-            epoch_rv2_errs.append(np.std(good_vrad2s)*np.sqrt(sum(epoch_norm_weight2s**2)))#append(np.std(good_vrad2s)/np.sqrt(len(good_vrad2s)))
-            epoch_jds.append(jds[i])
+            epoch_rv1_errs.append(np.std(corr_vrad1s)*np.sqrt(sum(norm_weights**2)))
+            epoch_rv2_errs.append(np.std(corr_vrad2s)*np.sqrt(sum(norm_weights**2)))
+            
 
         #Exemption for 'KIC-12317678' We here need to find the rv of weak component differently
         if ID == 'KIC12317678':
@@ -395,6 +373,9 @@ def find_rv_time(ID,log_path,data_type, limits=[0,-1],plot_offset=True):
         if len(rv_dat[0])>0:
             df.to_csv(rv_path,index=False)
 
+        
+        
+
         #The mean vsini over each epoch and the error:
         '''
         norm_vsini1_weights = epoch_vsini1_errs / sum(epoch_vsini1_errs)
@@ -440,7 +421,7 @@ for data_type, log_path in zip(data_types, log_paths):
         find_rv_time('KIC9693187',
                      log_path=log_path,
                      data_type=data_type)
-    '''
+   
 
     #KIC4914923
     if True:
@@ -448,7 +429,7 @@ for data_type, log_path in zip(data_types, log_paths):
                      log_path=log_path,
                      data_type=data_type,
                      limits = [20,60])
-    '''
+    
 
 
     #KIC9025370
@@ -457,13 +438,14 @@ for data_type, log_path in zip(data_types, log_paths):
                      log_path=log_path,
                      data_type=data_type)
     
-
+'''
 
     #KIC10454113
     if True:
         find_rv_time('KIC10454113',
                      log_path=log_path,
                      data_type=data_type)
+    '''
 
     
     #KIC4457331

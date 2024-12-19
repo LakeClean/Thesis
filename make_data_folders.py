@@ -5,6 +5,7 @@ import sys
 #Making folders for data to be filled by other script:
 
 #NOT data:
+
 path = '/home/lakeclean/Documents/speciale/target_analysis/'
 
 info_file = open('/home/lakeclean/Documents/speciale/NOT_order_file_log.txt').read().split('\n')
@@ -118,7 +119,7 @@ if name[0] != 'all' and len(name) == 1:
 #KECK :
 path = '/home/lakeclean/Documents/speciale/target_analysis/'
 
-info_file = open('/home/lakeclean/Documents/speciale/KECK_ordered_file_log.txt').read().split('\n')
+info_file = open('/home/lakeclean/Documents/speciale/KECK_order_file_log.txt').read().split('\n')
 
 IDs = []
 dates = []
