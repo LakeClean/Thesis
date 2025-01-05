@@ -2,7 +2,7 @@ import numpy as np
 from astroquery.vizier import Vizier
 from ophobningslov import *
 import sympy as sp
-#import numpy as np
+
 '''
 catalog_list = Vizier.find_catalogs('Gaia DR3')
 

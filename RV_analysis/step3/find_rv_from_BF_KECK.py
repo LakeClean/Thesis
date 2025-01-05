@@ -444,7 +444,8 @@ for data_type, log_path in zip(data_types, log_paths):
     if True:
         find_rv_time('KIC10454113',
                      log_path=log_path,
-                     data_type=data_type)
+                     data_type=data_type,
+                     ask_for_limits=False)
     '''
 
     

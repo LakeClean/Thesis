@@ -412,20 +412,17 @@ def find_rv_time(ID,log_path,data_type, limits=[0,-1],plot_offset=True):
     
         
         
-data_types = ['NOT', 'NOT_old_HIRES', 'NOT_old_LOWRES', 'TNG']#, 'KECK']
-log_paths = ['/home/lakeclean/Documents/speciale/NOT_order_file_log.txt',
-             '/home/lakeclean/Documents/speciale/NOT_old_HIRES_order_file_log.txt',
-             '/home/lakeclean/Documents/speciale/NOT_old_LOWRES_order_file_log.txt',
-             '/home/lakeclean/Documents/speciale/TNG_merged_file_log.txt']
+#data_types = ['NOT', 'NOT_old_HIRES', 'NOT_old_LOWRES', 'TNG']#, 'KECK']
+#log_paths = ['/home/lakeclean/Documents/speciale/NOT_order_file_log.txt',
+#             '/home/lakeclean/Documents/speciale/NOT_old_HIRES_order_file_log.txt',
+#             '/home/lakeclean/Documents/speciale/NOT_old_LOWRES_order_file_log.txt',
+#             '/home/lakeclean/Documents/speciale/TNG_merged_file_log.txt']
 
 #data_types = ['NOT_old_LOWRES']
 #log_paths = ['/home/lakeclean/Documents/speciale/NOT_old_LOWRES_order_file_log.txt']
 
-#data_types = ['NOT']
-#log_paths = ['/home/lakeclean/Documents/speciale/NOT_order_file_log.txt']
-
-data_types = ['KECK']
-log_paths = ['/home/lakeclean/Documents/speciale/KECK_order_file_log.txt']
+data_types = ['NOT']
+log_paths = ['/home/lakeclean/Documents/speciale/NOT_order_file_log.txt']
 
 for data_type, log_path in zip(data_types, log_paths):
     '''
@@ -440,7 +437,7 @@ for data_type, log_path in zip(data_types, log_paths):
         find_rv_time('KIC9693187',
                      log_path=log_path,
                      data_type=data_type)
-    '''
+    
 
     #KIC4914923
     if True:
@@ -448,7 +445,7 @@ for data_type, log_path in zip(data_types, log_paths):
                      log_path=log_path,
                      data_type=data_type,
                      limits = [20,60])
-    '''
+
 
 
     #KIC9025370
@@ -471,6 +468,7 @@ for data_type, log_path in zip(data_types, log_paths):
         find_rv_time('KIC4457331',
                      log_path=log_path,
                      data_type=data_type)
+    '''
 
     #EPIC246696804
     if True:
@@ -502,23 +500,23 @@ for data_type, log_path in zip(data_types, log_paths):
                      data_type=data_type)
 
     #KIC4260884
-    if True:
+    if False:
         find_rv_time('KIC4260884',
                      log_path=log_path,
                      data_type=data_type)
 
     #KIC9652971
-    if True:
+    if False:
         find_rv_time('KIC9652971',
                      log_path=log_path,
                      data_type=data_type)
 
     #KIC4260884
-    if True:
+    if False:
         find_rv_time('HD208139',
                      log_path=log_path,
                      data_type=data_type)
-    '''
+
 
 
 

@@ -15,10 +15,13 @@ Probably....
 
 #NOT:
 
-path = '/home/lakeclean/Downloads/'
+path = '/home/lakeclean/Documents/speciale/old/'
 
 zipedfiles = glob.glob(f'{path}reduced*')
 
+print('Unzipping the folowwing files:')
+for i in zipedfiles:
+    print(i)
 
 temporary_dir = f"{path}temp_dir"
 

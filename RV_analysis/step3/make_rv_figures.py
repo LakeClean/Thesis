@@ -823,7 +823,7 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
         
 
 
-
+'''
 #KIC12317678
 if False:
     plot_rv_time('KIC12317678',fit_params=[18,26,0.3,100,82,-41],limits=[20,60],SB_type=2,
@@ -859,50 +859,52 @@ if False:
                  make_table=True,print_mass=True,exclude_points=12,
                  res1=4,res_off1=-0.04,res2=4,res_off2=0.03)
 
-
+'''
 #KIC10454113
 if True:
     plot_rv_time('KIC10454113',fit_params=[16,0.8,100,6000,-20],SB_type=1,
                  orbital_period=100, show_plot=True,save_plot=True, report_fit=True,
-                 make_phase_plot=False,make_river_plot=False, scale_river=[-0.0005,0.08,100],
+                 make_phase_plot=True,make_river_plot=False, scale_river=[-0.0005,0.08,100],
                  make_table=True,exclude_points=0)
 
-'''
+
 #KIC4457331
-if True:
+if False:
     plot_rv_time('KIC4457331',fit_params=[],limits=[20,60],SB_type=1,
                  orbital_period=100, show_plot=False,save_plot=True, report_fit=True,
                  make_phase_plot=False,make_river_plot=True, scale_river=[-0.0005,0.08,100],
                  make_table=True,
                  find_rv=True)
 
+
+'''
 #EPIC-246696804
 if True:
-    plot_rv_time('EPIC-246696804',fit_params=[],limits=[20,60],SB_type=1,
-                 orbital_period=100, show_plot=False,save_plot=True, report_fit=True,
+    plot_rv_time('EPIC246696804',fit_params=[],limits=[20,60],SB_type=1,
+                 orbital_period=100, show_plot=True,save_plot=True, report_fit=True,
                  make_phase_plot=False,make_river_plot=True, scale_river=[-0.0005,0.08,100],
                  make_table=True,
                  find_rv=True)
     
 #EPIC-212617037
 if True:
-    plot_rv_time('EPIC-212617037',fit_params=[],limits=[20,60],SB_type=1,
-                 orbital_period=100, show_plot=False,save_plot=True, report_fit=True,
+    plot_rv_time('EPIC212617037',fit_params=[],limits=[20,60],SB_type=1,
+                 orbital_period=100, show_plot=True,save_plot=True, report_fit=True,
                  make_phase_plot=False,make_river_plot=True, scale_river=[-0.0005,0.08,100],
                  make_table=True,
                  find_rv=True)
 #EPIC-249570007
 if True:
-    plot_rv_time('EPIC-249570007',fit_params=[],limits=[20,60],SB_type=1,
-                 orbital_period=100, show_plot=False,save_plot=True, report_fit=True,
+    plot_rv_time('EPIC249570007',fit_params=[],limits=[20,60],SB_type=1,
+                 orbital_period=100, show_plot=True,save_plot=True, report_fit=True,
                  make_phase_plot=False,make_river_plot=True, scale_river=[-0.0005,0.08,100],
                  make_table=True,
                  find_rv=True)
 
 #EPIC-230748783
 if True:
-    plot_rv_time('EPIC-230748783',fit_params=[],limits=[20,60],SB_type=1,
-                 orbital_period=100, show_plot=False,save_plot=True, report_fit=True,
+    plot_rv_time('EPIC230748783',fit_params=[],limits=[20,60],SB_type=1,
+                 orbital_period=100, show_plot=True,save_plot=True, report_fit=True,
                  make_phase_plot=False,make_river_plot=True, scale_river=[-0.0005,0.12,100],
                  make_table=True,
                  find_rv=True)
@@ -910,12 +912,13 @@ if True:
 
 #EPIC-236224056
 if True:
-    plot_rv_time('EPIC-236224056',fit_params=[],limits=[20,60],SB_type=1,
-                 orbital_period=100, show_plot=False,save_plot=True, report_fit=True,
+    plot_rv_time('EPIC236224056',fit_params=[],limits=[20,60],SB_type=1,
+                 orbital_period=100, show_plot=True,save_plot=True, report_fit=True,
                  make_phase_plot=False,make_river_plot=True, scale_river=[-0.0005,0.14,100],
                  make_table=True,
                  find_rv=True)
-
+'''
+'''
 #KIC4260884
 if True:
     plot_rv_time('KIC4260884',fit_params=[],limits=[20,60],SB_type=1,
@@ -939,8 +942,8 @@ if True:
                  make_phase_plot=False,make_river_plot=True, scale_river=[-0.0005,0.14,100],
                  make_table=True,
                  find_rv=True)
-
 '''
+
 
 #Really good guesses:
 '''
@@ -969,6 +972,9 @@ Parameters([('k1', <Parameter 'k1', value=15.451681911047931, bounds=[0.0:inf]>)
 ('w', <Parameter 'w', value=105.11050703896773, bounds=[0.0:360.0]>), ('p', <Parameter 'p', value=99.20286889338607, bounds=[-inf:inf]>),
 ('t0', <Parameter 't0', value=-166.2733050942353, bounds=[-inf:inf]>), ('v0_1', <Parameter 'v0_1', value=-24.398265475664452, bounds=[-inf:inf]>)])
 '''
+
+
+
 '''
 
 #KIC4457331

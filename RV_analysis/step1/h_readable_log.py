@@ -73,7 +73,7 @@ for line in lines[:-1]:
         names.append(ID)
 
 
-#KECK
+#ESpaDOns
 lines = open('/home/lakeclean/Documents/speciale/ESpaDOns_merged_file_log.txt').read().split('\n')
 for line in lines[:-1]:
     line = line.split(',')

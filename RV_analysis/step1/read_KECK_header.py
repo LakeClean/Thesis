@@ -11,7 +11,7 @@ from astropy.coordinates import SkyCoord
 #Sorting based on date:
 def mySort(x):
     x = x.split(',')
-    return x[3]
+    return x[2]
 
 pm_dir = '/home/lakeclean/Documents/speciale/propermotion_parallax.txt'
 pm_lines = open(pm_dir).read().split('\n')
@@ -21,7 +21,8 @@ target_ID = 'KIC10454113'
 
 directory = f'/home/lakeclean/Documents/speciale/initial_data/KECK/{target_ID}'
 folders = glob.glob(f'{directory}/*')
-f = open('/home/lakeclean/Documents/speciale/KECK_ordered_file_log.txt','w')
+print(folders)
+f = open('/home/lakeclean/Documents/speciale/KECK_order_file_log.txt','w')
 head = "ID,directory,date,T_exp,"
 head = head + "ra,dec,lat,longi,alt,pmra,pmdec,px"
 head = head + ",epoch_jd,v_bary,TELESCOP"

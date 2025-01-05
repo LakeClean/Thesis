@@ -9,13 +9,17 @@ from time import time
 from scipy.signal import find_peaks
 from astropy.time import Time
 import make_table_of_target_info as mt
+import read_goettingen as gg
 
-#import template
+#import template from arcturus
 template_dir = '/home/lakeclean/Documents/speciale/templates/ardata.fits'
 template_data = pyfits.getdata(f'{template_dir}')
 tfl_RG = template_data['arcturus']
-tfl_MS = template_data['solarflux']
+#tfl_MS = template_data['solarflux']
 twl = template_data['wavelength']
+
+#import template from goettingen:
+_a, tfl_gg, _b, twl_gg = gg.get_goettingen()
 
 
 #fig, ax  = plt.subplots()

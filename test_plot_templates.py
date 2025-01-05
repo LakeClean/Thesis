@@ -8,18 +8,31 @@ import glob
 import shazam
 from astropy.time import Time
 from PyAstronomy import pyasl #For converting from vacuum to air
+import read_goettingen as gg
 
+def wl_corr(wl,vbary=0):
+    c = 299792 #speed of light km/s
+    return (1+vbary/c)*wl
+
+def vac2air(wl_vac):
+    s = 10**4 / wl_vac
+    n = 1 +  0.0000834254 + 0.02406147 / (130 - s**2)
+    n += 0.00015998 / (38.9 - s**2)
+    return wl_vac / n
+    
 
 #Plotting the templates to compare them
 
-#Old template from arcturus where:
-
+#Old template from arcturus:
 fig,ax =plt.subplots()
 template_dir = '/home/lakeclean/Documents/speciale/templates/ardata.fits'
 template_data = pyfits.getdata(f'{template_dir}')
 tfl_RG = template_data['arcturus']
 tfl_MS = template_data['solarflux']
 twl = template_data['wavelength']
+
+
+#from goettingen
 
 path = '/home/lakeclean/Downloads/spvis.dat.gz'
 
@@ -29,28 +42,95 @@ print(df.keys())
 
 df = df.to_numpy()
 
-plt.plot(pyasl.vactoair2(10**(8)/df[:,0]),df[:,1],color='r',label='(Reiners, 2016)')
-ax.plot(twl,tfl_MS,color='b')
-#plt.show()
 
+#also from goettingen:
+wn, sun, tel, wave = gg.get_goettingen()
+plt.plot(wl_corr(wave,0),sun,color='r')
+
+plt.plot(wl_corr(wave,0.15),sun,color='b')
+
+
+plt.plot(pyasl.vactoair2(10**(8)/df[:,0]),df[:,1],color='r',label='(Reiners, 2016)')
+plt.plot(vac2air(10**(8)/df[:,0]),df[:,1],color='pink',
+         label='(Reiners, 2016)')
+
+#ax.plot(wl_corr(twl,0),tfl_MS,color='r')
+#ax.plot(wl_corr(twl,0.28),tfl_MS,color='b')
+plt.xlim(6767.6,6768)
+plt.ylim(0.3,1.1)
+#plt.show()
+plt.close()
+
+# Looking at the KECK spectra to see if offset is similar to RV found.
+
+rv_path = '/home/lakeclean/Documents/speciale/rv_data/KECK_KIC10454113.txt'
+
+
+df = pd.read_csv(rv_path)
+dates = df['date'].to_numpy()
+rvs = df['rv1'].to_numpy()
+vbarys = df['vbary'].to_numpy()
+
+
+path_folders = '/home/lakeclean/Documents/speciale/initial_data/KECK/KIC10454113'
+folders = glob.glob(path_folders + '/*')
+
+def sorter(folder):
+    return folder[len(path_folders)+1:]
+
+folders.sort(key=sorter)
+
+for folder in folders:
+    files = glob.glob(folder + '/*')
+    
+    
+    for i,date in enumerate(dates):
+        if date[0:10] == folder[len(path_folders)+1:]:
+            rv = rvs[i]
+            vbary = vbarys[i]
+            print(date[0:10],folder[len(path_folders)+1:],rv,vbary,rv-vbary)
+    
+    for file in files:
+        data = pyfits.getdata(file)
+        w = data['wave']
+        #w = pyasl.vactoair2(w)
+        w = wl_corr(w,-rv)
+        w = wl_corr(w,vbary)
+
+        #if (w[0] < 6500) & (w[0]>6000):
+        f = data['Flux']
+        nw, nf = shazam.normalize(w,f,gauss=False)
+        plt.plot(nw,nf,color='red')
+#plt.plot(wave,sun)
+#plt.xlim(4850,4865)
+plt.ylim(-0.5,2)
+#plt.show()
+ 
+   
 
 #new templates from Phoenix:
+#plt.close()
 
 phoenix_templates = '/home/lakeclean/Documents/speciale/templates/phoenix/'
 wl = pyfits.getdata(phoenix_templates + 'WAVE_PHOENIX-ACES-AGSS-COND-2011.fits')
 fl = pyfits.getdata(phoenix_templates + 'lte04700-3.00-0.0.PHOENIX-ACES-AGSS-COND-2011-HiRes.fits')
+fl = pyfits.getdata(phoenix_templates + 'lte06100-4.50-0.0.PHOENIX-ACES-AGSS-COND-2011-HiRes.fits')
+
+
 
 idx = np.where( (wl>3000) & (wl <16900))[0]
-wl = pyasl.vactoair2(wl[idx])
+#wl = pyasl.vactoair2(wl[idx])
+wl = wl[idx]
 fl = fl[idx]
 
-fig,ax = plt.subplots()
+#fig,ax = plt.subplots()
 for i in range(100):
     i = i*100
     tmp_idx = np.where( ((wl[0] + i )<wl) & ((wl[0] + i +100 )>wl))[0]
-    nwl, nfl = shazam.normalize(wl[tmp_idx],fl[tmp_idx],gauss=False)
-    ax.plot(nwl,nfl)
-    #ax.plot(wl[tmp_idx],fl[tmp_idx])
+    nwl, nfl = shazam.normalize(wl[tmp_idx],fl[tmp_idx],gauss=True)
+    plt.plot(nwl,nfl,color='b')
+    #ax.plot(wl[tmp_idx],fl[tmp_idx],color='r')
+#ax.plot(wave,sun,color='b')
 plt.show()
 
 
@@ -125,9 +205,7 @@ plt.show()
 #Plotting the extreme case of KIC1045...
 
 
-def wl_corr(wl,vbary=0):
-    c = 299792 #speed of light km/s
-    return (1+vbary/c)*wl
+
 '''
 vbary = -7406.861379294089/1000 -12
 

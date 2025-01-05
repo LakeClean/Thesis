@@ -74,11 +74,11 @@ os.rmdir(temporary_dir)
 
 
 #HIRES:
-'''
+
 path = '/home/lakeclean/Downloads/'
 
 
-folders = ['KOA_69614']
+folders = ['KOA_126090']
 
 files = []
 for folder in folders:
@@ -91,9 +91,9 @@ for folder in folders:
 
 print(files)
 
-final_dir = '/home/lakeclean/Documents/speciale/initial_data/KECK/KIC10454113/'
+final_dir = '/home/lakeclean/Documents/speciale/initial_data/KECK/KIC9693187/'
 
-length = len('/home/lakeclean/Downloads/KOA_66711/HIRES/extracted/binaryfits/ccd1/flux')
+length = len('/home/lakeclean/Downloads/KOA_126090/HIRES/extracted/binaryfits/ccd1/flux')
 
 for file in files:
     directories = glob.glob(f'{final_dir}*')
@@ -102,9 +102,10 @@ for file in files:
     date_begin = epoch_date
     print(epoch_date,header['TARGNAME'])
     new_name = final_dir + date_begin + file[length:]
+    print(new_name)
     
     
-
+    
     if final_dir + date_begin in directories:
         new_name = final_dir + date_begin + file[length:]
         shutil.copyfile(file,new_name)
@@ -113,10 +114,12 @@ for file in files:
         os.mkdir(final_dir + date_begin)
         new_name = final_dir + date_begin + file[length:]
         shutil.copyfile(file,new_name)
-'''
+    
+
 
 
 #ESpaDOns:
+'''
 path = '/home/lakeclean/Documents/speciale/initial_data/ESPaDOns/CFHT*'
 folders = glob.glob(path)
 all_files = []
@@ -155,7 +158,7 @@ for file in all_files:
         os.mkdir(final_dir + date_begin)
         shutil.copyfile(file,new_name)
     
-
+'''
 
 
 

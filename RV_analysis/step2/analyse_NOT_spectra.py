@@ -9,30 +9,41 @@ from time import time
 from scipy.signal import find_peaks
 from astropy.time import Time
 import make_table_of_target_info as mt
-from PyAstronomy import pyasl #For converting from vacuum to air
 
-
-
-#### importing templates ####
-
-#RGB from ardata
+#import template
 template_dir = '/home/lakeclean/Documents/speciale/templates/ardata.fits'
 template_data = pyfits.getdata(f'{template_dir}')
-arcturus_tfl_RG = template_data['arcturus']
-arcturus_twl = template_data['wavelength']
+tfl_RG = template_data['arcturus']
 tfl_MS = template_data['solarflux']
+twl = template_data['wavelength']
 
 
 
-#import the global info
+#fig, ax  = plt.subplots()
+#ax.plot(twl,tfl_MS)
+#plt.show()
+
+#import the RGB info
+'''
+lines = open('/home/lakeclean/Documents/speciale/NOT/Target_names_and_info.txt').read().split('\n')[1:14]
+all_target_names = [] # Just a list of the names
+RGBs = [] # names of known RGB stars
+for line in lines:
+    line = line.split()
+    all_target_names.append(line[0])
+
+    if len(line)>5: #noting the RG stars
+        if line[5]=='(RGB)':
+            RGBs.append(line[0])
+'''
 tab = mt.get_table()
 all_target_names = tab['ID'].data # Just a list of the names
-#RGBs = tab['star_type'].data # names of known RGB stars
-#Teffs = tab['Teff'].data #Effective temperature [K]
-#loggs = tab['loggs'].data
-#FeHs = tab['Fe/H'].data
+RGBs = tab['star_type'].data # names of known RGB stars
+all_ras = tab['RA'].data # right ascension of all stars
+all_decs = tab['DEC'].data #declination of all stars
 
-def analyse_spectrum(folder,target_name, template='MS',start_order=1, append_to_log=False,
+
+def analyse_spectrum(file, template='MS',start_order=1, append_to_log=False,
                      
                      normalize_bl = np.array([]),normalize_poly=1,normalize_gauss=True,
                      normalize_lower=0.5,normalize_upper=1.5,
@@ -101,81 +112,99 @@ def analyse_spectrum(folder,target_name, template='MS',start_order=1, append_to_
             - resample and flip spectrum and template with shazam.resample
             -
     '''
+    data, no_orders, bjd, vhelio, star, date, exp = shazam.FIES_caliber(file)
     
-    #Importing data for the specific epoch:
-    files = glob.glob(f'{folder}/*')
-    def file_sorter(file):
-        ccd = int(file.split('_')[2])
-        order = int(file.split('_')[3])
-        return (ccd,order)
+    header = pyfits.getheader(file)
+    ra = header['RA']
+    dec = header['DEC']
+
+    #Finding out the name of target based on RA and DEC:
+    coord_dist = np.sqrt( (all_ras- ra)**2 + (all_decs-dec)**2)
+    epoch_name = all_target_names[np.where(coord_dist == min(coord_dist))[0]][0]
     
-    files.sort(key=file_sorter)
+    
+    '''
+    epoch_name = header['TCSTGT'].strip(' ').replace('-','') #name of target
+    
+    try: #Specific test for old not targets
+        test = int(epoch_name[0])
+        if test == 0:
+            epoch_name = 'KIC' + epoch_name[1:]
+        else:
+            epoch_name = 'KIC' + epoch_name
+    except:
+        pass
+    '''
+    
+    epoch_date = header['DATE-OBS'].strip(' ')   #date of fits creation
+    epoch_Vhelio = header['VHELIO'] # heliocentric velocity
+    print(epoch_name,header['TCSTGT'].strip(' '), epoch_date)
+    
+    if epoch_name in RGBs:
+        tfl = tfl_RG
+    else:
+        tfl = tfl_MS
 
-    no_orders = len(files)
+    path = f'/home/lakeclean/Documents/speciale/target_analysis/{epoch_name}/{epoch_date}'
 
-    epoch_name = target_name #name of target
-    epoch_date = folder[-10:]  #date of fits creation
-    print(epoch_name, epoch_date)
-    #Path for the reduced data:
-    path = '/home/lakeclean/Documents/speciale/target_analysis/' + epoch_name +'/' + epoch_date
+    #######################################################################
+
+    if append_to_log:
+        f = open('analyse_log.txt').read()
+        f += f'{start_order}, {append_to_log}, {normalize_bl}, {normalize_poly}, {normalize_gauss},'
+        f += f'{normalize_lower}, {normalize_upper}, {crm_iters}, {crm_q}, {resample_dv}, {resample_edge},'
+        f += f' {getCCF_rvr}, {getCCF_ccf_mode}, {getBF_rvr}, {getBF_dv},'
+        f += f'{rotbf2_fit_fitsize},{rotbf2_fit_res},{rotbf2_fit_smooth},'
+        f += f'{rotbf2_fit_vsini1},{rotbf2_fit_vsini2},{rotbf2_fit_vrad1},'
+        f += f'{rotbf2_fit_vrad2},{rotbf2_fit_ampl1},{rotbf2_fit_ampl2},'
+        f += f'{rotbf2_fit_print_report},{rotbf2_fit_smoothing},'
+        f += f'{rotbf_fit_fitsize},{rotbf_fit_res},{rotbf_fit_smooth},'
+        f += f'{rotbf_fit_vsini},{rotbf_fit_print_report},'
+        f += f'{use_SVD},{SB_type},{show_plots}, {save_plots}, {save_data},'
+        f += f'{show_bin_plots},{save_bin_info}'
+        lines = f
+        f.close()
+        f.open('analyse_log.txt','w')
+        f.write(lines)
+        f.close()
         
+
+    
+
     #######################################################################
     def save_datas(datas,labels,title):
         f = open(path + f"/data/{title}.txt",'w')
         result1 = ''
         for i in labels:
             result1 += f'{i},'
-                
-        f.write(f'{result1[:-1]}\n')
             
+        f.write(f'{result1[:-1]}\n')
+        
         for i in range(len(datas[0])):
             result2 = ''
             for j in range(len(datas)):
                 result2 += f'{datas[j][i]},'
             f.write(f'{result2[:-1]}\n')
-                
+            
         f.close()
-        
-    def correct_logg(x):
-        test = x%0.5
-        if test >=0.25:
-            return x + 0.5 - test
-        else:
-            return x -test
     ########################################################################
 
 
-    #Selcting the appropiate template:
-    if mt.get_value('star_type',target_name) == 'RGB':
-        tfl = arcturus_tfl_RG
-        twl = arcturs_twl
-    else:
-        Teff = int(np.round(float(mt.get_value('Teff',target_name)),-2))
-        logg = correct_logg(float(mt.get_value('logg',target_name)))
-        FeH = mt.get_value('Fe/H',target_name)
-        templates_path = '/home/lakeclean/Documents/speciale/templates/phoenix/*'
-        tfl = tfl_MS
-        twl = arcturus_twl
-        
-
+    
         
     #Raw spectrum is plotted
+    
     fig, ax = plt.subplots()
-    for order in files:
+    for order in np.arange(3,no_orders,1):
         
         x_label, y_label, title ='wavelength [Å]', 'flux (raw)', 'ordered'
-        z = pyfits.getdata(order)
-        header = pyfits.getheader(order)
-        #print(header['HELIOVEL'],header['DATE'])
-        xs, ys = z['wave'],z['flux']
-        xs = pyasl.vactoair2(xs) #Converting to air wavelength
+        xs, ys = shazam.getFIES(data,order=order)
 
         ax.plot(xs,ys)
         ax.set_xlabel(x_label)
         ax.set_ylabel(y_label)
         plot_title = title #+ ' ' + epoch_name + ' ' + epoch_date
         ax.set_title(plot_title+ ' ' + epoch_name + ' ' + epoch_date)
-        #ax.set_ylim(np.percentile(ys,99)*2,np.percentile(ys,1)*2)
     
     if save_plots: fig.savefig(path+f"/plots/{plot_title.replace(' ','_')}.svg",
                                    dpi='figure', format='svg')
@@ -209,35 +238,27 @@ def analyse_spectrum(folder,target_name, template='MS',start_order=1, append_to_
 
     slopes = np.zeros(no_orders) 
     bin_wls = np.zeros(no_orders)
-    ccds = np.zeros(no_orders) #KECK data has inconsistent amount of orders
-    orders = np.zeros(no_orders) 
 
-    for i in np.arange(0,no_orders,1):
-
-        #find the order of the file:
-        ccd = int(files[i].split('_')[2])
-        order = int(files[i].split('_')[3])
-        ccds[i] = ccd
-        orders[i] = order
-
+    #Going through each order
+    for i in np.arange(start_order,no_orders,1):
         
+
         #Pick out correct wl range
-        z = pyfits.getdata(files[i]) 
-        wl, fl = z['wave'],z['flux']
-        wl = pyasl.vactoair2(wl) #converting from vacuum to air
-        
+        wl, fl = shazam.getFIES(data,order=i)
         bin_wls[i] = wl[int(len(wl)/2)]
 
         #Check if template does not cover spectrum:
         if wl[0] < twl[0]:
-            print(f'ccd {ccd}, order {order} was outside template:', wl[0], twl[0])
+            print(f'order {i} was outside template:', wl[0], twl[0])
             continue
         
-        
+
         if save_data: save_datas([wl,fl],['wavelength [Å]', 'flux (raw)'],
-                                 f"order_{order}_ccd_{ccd}_raw_spectrum")
+                                 f"order_{i}_raw_spectrum")
         
-        if np.mean(fl)<0.001: print('flux is very low') 
+        if np.mean(fl)<0.001: print('flux is very low')
+        
+  
 
         #normalize
         nwl, nfl = shazam.normalize(wl,fl, normalize_bl,normalize_poly,
@@ -246,7 +267,7 @@ def analyse_spectrum(folder,target_name, template='MS',start_order=1, append_to_
         nfl = nfl / np.median(nfl[np.where(np.percentile(nfl,95)<nfl)[0]])#The flux of the normalized flux that is above 95% percentile
         
         if save_data: save_datas([nwl,nfl],['wavelength [Å]', 'flux (norm)'],
-                                 f"order_{order}_ccd_{ccd}_normalized")
+                                 f"order_{i}_normalized")
         epoch_nwls.append(nwl)
         epoch_nfls.append(nfl)
 
@@ -262,13 +283,12 @@ def analyse_spectrum(folder,target_name, template='MS',start_order=1, append_to_
         
         
         #Resample and flip:
-        #print(nwl,nfl,twl,tfl)
         r_wl, rf_fl, rf_tl = shazam.resample(nwl,nfl,twl,tfl, resample_dv, resample_edge)
         if save_data: save_datas([r_wl, rf_fl, rf_tl],
                                  ['wavelength(resampled) [Å]',
                                   'flux (resampled and flipped)',
                                   'template flux (resampled and flipped)']
-                                  ,f"order_{order}_ccd_{ccd}_resampled_flipped")
+                                  ,f"order_{i}_resampled_flipped")
         epoch_rf_wls.append(r_wl)
         epoch_rf_fls.append(rf_fl)
         epoch_rf_tfls.append(rf_tl)
@@ -323,7 +343,7 @@ def analyse_spectrum(folder,target_name, template='MS',start_order=1, append_to_
             if save_data: save_datas([rvs,bf,bfgs,model],
                                      ['wavelength [km/s]', 'broadening function',
                                       'smoothed_bf', 'Fitted model'],
-                                     f"order_{order}_ccd_{ccd}_broadening_function")
+                                     f"order_{i}_broadening_function")
         
         # Plotting for every bin:
         if show_bin_plots:
@@ -373,12 +393,12 @@ def analyse_spectrum(folder,target_name, template='MS',start_order=1, append_to_
             plt.show()
             plt.close()
             
-    if save_data: save_datas([bin_wls, epoch_vrad1, epoch_vrad2,epoch_ampl1, epoch_ampl2,
+    if save_data: save_datas([epoch_vrad1, epoch_vrad2,epoch_ampl1, epoch_ampl2,
                                   epoch_vsini1, epoch_vsini2, epoch_gwidth, epoch_limbd,
-                                  epoch_const,ccds,orders],
-                                     ['bin_wls', 'epoch_vrad1', 'epoch_vrad2','epoch_ampl1', 'epoch_ampl2',
+                                  epoch_const],
+                                     ['epoch_vrad1', 'epoch_vrad2','epoch_ampl1', 'epoch_ampl2',
                                   'epoch_vsini1', 'epoch_vsini2', 'epoch_gwidth', 'epoch_limbd',
-                                  'epoch_const','ccd','order'],
+                                  'epoch_const'],
                                      f"bf_fit_params")
 
     # Plotting bfs or ccfs together:
@@ -432,7 +452,7 @@ def analyse_spectrum(folder,target_name, template='MS',start_order=1, append_to_
     ax.scatter(xs,ys,label='rv1')
     ax.scatter(bin_wls,epoch_vrad2,label='rv2')
     ax.plot([xs[0],xs[-1]],[np.mean(ys),np.mean(ys)],label='mean',color='r')
-    #ax.plot([xs[0],xs[-1]],[epoch_Vhelio,epoch_Vhelio],label=f'V_helio={epoch_Vhelio}',color='g')
+    ax.plot([xs[0],xs[-1]],[epoch_Vhelio,epoch_Vhelio],label=f'V_helio={epoch_Vhelio}',color='g')
     ax.legend()
     ax.set_xlabel(x_label)
     ax.set_ylabel(y_label)
@@ -471,29 +491,26 @@ def analyse_spectrum(folder,target_name, template='MS',start_order=1, append_to_
     return epoch_vrad1, epoch_vsini1
 
 
-
-#filename = '/home/lakeclean/Documents/speciale/initial_data/2024-04-02/FIHd020137_step011_merge.fits'
-
-#analyse_spectrum(filename,use_SVD=False,show_bin_plots=False)
-
 #### importing all the spectra:
-'''
+
+#lines = open('/home/lakeclean/Documents/speciale/NOT_old_LOWRES_order_file_log.txt').read().split('\n')
+#lines = open('/home/lakeclean/Documents/speciale/NOT_old_HIRES_order_file_log.txt').read().split('\n')
 lines = open('/home/lakeclean/Documents/speciale/NOT_order_file_log.txt').read().split('\n')
 files = []
 IDs = []
 dates = []
-for line in lines[:-1]:
+for line in lines[1:-1]:
     line = line.split(',')
-    file = line[2].strip()
-    SEQID = line[1].strip()
+    file = line[1].strip()
+    #SEQID = line[1].strip()
     ID = line[0].strip()
-    date = line[3].strip()
-    if SEQID == 'science':
-        files.append(file)
-        IDs.append(ID)
-        dates.append(date)
-'''
-SB2IDs =['KIC-9693187','KIC-9025370','KIC9652971']
+    date = line[2].strip()
+    #if SEQID == 'science':
+    files.append(file)
+    IDs.append(ID)
+    dates.append(date)
+
+SB2IDs =['KIC9693187','KIC9025370','KIC9652971']
 IDlines = open('/home/lakeclean/Documents/speciale/spectra_log_h_readable.txt').read().split('&')
 SB2_IDs, SB2_dates, SB2_types, vguess1s, vguess2s = [], [], [], [], []
 for IDline in IDlines[:-1]:
@@ -511,23 +528,20 @@ for IDline in IDlines[:-1]:
             
         
 
-
+#Typical resolutions: NOT (HIRES = 67000, LOWRES = 25000) https://www.not.iac.es/instruments/fies/
+#                     TNG (HARPS = 115000)
 
 k=0
 time1 = time()
-
-
-folder_paths = glob.glob('/home/lakeclean/Documents/speciale/initial_data/KECK/KIC10454113/*')
-folder_paths.sort()
-
-
-for folder in folder_paths:
-    #date = folder.split('/')[-1]
+for file,ID,date in zip(files[0:],IDs[0:],dates[0:]):
     
-    #if ID == 'KIC12317678':
-    #if date == '2017-07-08':
-        #if Time(date).jd > 2460640:
-            #print(f'Spectrum: {k}/{len(files)}, Time: {time()-time1}s')
+    #print(date)
+    #analyse_spectrum(file,bin_size=200,use_SVD=,
+    #                 show_bin_plots=False,show_plots=False)
+    #if ID == 'KIC9025370':
+        #if date == '2013-08-06T23:33:46.4':
+        if (Time(date).jd > 2460643.5):# and (Time(date).jd > 2457294):
+            print(f'Spectrum: {k}/{len(files)}, Time: {time()-time1}s')
             time1 = time()
             k+=1
             start_order=1
@@ -536,15 +550,42 @@ for folder in folder_paths:
             save_plots=False
             show_plots=False
             rotbf_fit_print_report=False
-            target_name = 'KIC10454113'
-            analyse_spectrum(folder,target_name =target_name, SB_type = 1, start_order=start_order,
+            resolution = 67000 #Notice different instruments have different resolution
+            
+            if ID not in SB2IDs:
+                    analyse_spectrum(file,SB_type = 1, start_order=start_order,
                              show_bin_plots=show_bin_plots,save_data=save_data,
                              save_plots=save_plots,show_plots=show_plots,
-                             rotbf_fit_print_report=rotbf_fit_print_report)
+                             rotbf_fit_print_report=rotbf_fit_print_report,
+                             rotbf_fit_res=resolution)
 
-    
-    
+            else:
+                for SB2_date,SB2_type,vguess1,vguess2 in zip(SB2_dates,SB2_types, vguess1s,vguess2s):
+                    if SB2_date == date:
+                        if SB2_type == '1':
+                            analyse_spectrum(file,SB_type = 1, start_order=start_order,
+                                     show_bin_plots=show_bin_plots,save_data=save_data,
+                                     save_plots=save_plots,show_plots=show_plots,
+                                     rotbf_fit_print_report=rotbf_fit_print_report,
+                                     rotbf_fit_res=resolution)
+                                
+                        if SB2_type == '2':
+                            print('Initial guesses: ', vguess1,vguess2)
+                            analyse_spectrum(file,SB_type = 2, start_order=start_order,
+                                     show_bin_plots=show_bin_plots,save_data=save_data,
+                                     save_plots=save_plots,show_plots=show_plots,
+                                     rotbf2_fit_print_report=rotbf_fit_print_report,
+                                     rotbf2_fit_vrad1=float(vguess1),
+                                     rotbf2_fit_vrad2=float(vguess2),
+                                     rotbf2_fit_res=resolution)
 
+                            
+
+
+
+                             #rotbf_fit_fitsize=30,rotbf_fit_res=60000,rotbf_fit_smooth=2.0,
+                             #rotbf_fit_vsini=5.0,rotbf_fit_print_report=True)
+    
 
 
 
