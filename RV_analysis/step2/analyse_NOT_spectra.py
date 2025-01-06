@@ -11,11 +11,13 @@ from astropy.time import Time
 import make_table_of_target_info as mt
 
 #import template
+'''
 template_dir = '/home/lakeclean/Documents/speciale/templates/ardata.fits'
 template_data = pyfits.getdata(f'{template_dir}')
 tfl_RG = template_data['arcturus']
 tfl_MS = template_data['solarflux']
 twl = template_data['wavelength']
+'''
 
 
 
@@ -41,7 +43,9 @@ all_target_names = tab['ID'].data # Just a list of the names
 RGBs = tab['star_type'].data # names of known RGB stars
 all_ras = tab['RA'].data # right ascension of all stars
 all_decs = tab['DEC'].data #declination of all stars
-
+all_Teffs = tab['Teff'].data #Effective temperature as given by mikkel
+all_loggs = tab['logg'].data #surface gravity as given by Mikkel
+all_FeHs = tab['Fe/H'].data #metallicity as given by Mikkel
 
 def analyse_spectrum(file, template='MS',start_order=1, append_to_log=False,
                      
@@ -121,20 +125,40 @@ def analyse_spectrum(file, template='MS',start_order=1, append_to_log=False,
     #Finding out the name of target based on RA and DEC:
     coord_dist = np.sqrt( (all_ras- ra)**2 + (all_decs-dec)**2)
     epoch_name = all_target_names[np.where(coord_dist == min(coord_dist))[0]][0]
+
+
+    #### Importing template ####
+
+    #Finding the right template:
+    phoenix_templates = glob.glob('~/Speciale/data/templates/phoenix')
+    dists = np.empty(len(phoenix_templates))
+    for template in phoenix_templates:
+        template = template.split('-')
+        template_Teff = int(template[0][4:])
+        template_logg = float(template[1])
+        template_FeH = float(template[2][3])
+
+        
+        
+        
+        
     
-    
-    '''
-    epoch_name = header['TCSTGT'].strip(' ').replace('-','') #name of target
-    
-    try: #Specific test for old not targets
-        test = int(epoch_name[0])
-        if test == 0:
-            epoch_name = 'KIC' + epoch_name[1:]
-        else:
-            epoch_name = 'KIC' + epoch_name
-    except:
-        pass
-    '''
+    phoenix_templates = '/home/lakeclean/Documents/speciale/templates/phoenix/'
+    phoenix_twl = pyfits.getdata(phoenix_templates + 'WAVE_PHOENIX-ACES-AGSS-COND-2011.fits')
+    phoenix_tfl = pyfits.getdata(phoenix_templates + 'lte06100-4.50-0.0.PHOENIX-ACES-AGSS-COND-2011-HiRes.fits')
+    #limiting to the range where conversion works
+    idx = np.where( (phoenix_twl>3000) & (phoenix_twl <16900))[0]
+    #phoenix_twl = pyasl.vactoair2(phoenix_twl[idx])
+    phoenix_twl = phoenix_twl[idx]
+    phoenix_tfl = phoenix_tfl[idx]
+
+    norm_phoenix_tfl = np.empty_like(phoenix_tfl)
+    #normalizinf template in bits of 100 Å
+    for i in range(100):
+        i = i*100
+        tmp_idx = np.where(( (phoenix_twl[0] + i)<phoenix_twl)& ( (phoenix_twl[0] + i +100 )>phoenix_twl)  )[0]
+        nwl, nfl = shazam.normalize(phoenix_twl[tmp_idx],phoenix_tfl[tmp_idx],gauss=False)
+        norm_phoenix_tfl[tmp_idx] = nfl
     
     epoch_date = header['DATE-OBS'].strip(' ')   #date of fits creation
     epoch_Vhelio = header['VHELIO'] # heliocentric velocity

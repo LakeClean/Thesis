@@ -99,8 +99,8 @@ def find_rv_time(ID,log_path,data_type,plotting=True,ask_for_limits=True):
                         ccd_order_offsets[(ccds[i],orders[i])] = ccd_order_offsets[(ccds[i],orders[i])] + [vrad2s[i] - np.median(vrad2s)]
 
             #We plot the vrad to determine where the range is good:
-            ax.scatter(bin_wls,vrad1s - np.median(vrad1s[10:30]))
-            ax.scatter(bin_wls,vrad2s - np.median(vrad2s[10:30]))
+            ax.scatter(bin_wls,vrad1s - np.median(vrad1s[11:14]))
+            ax.scatter(bin_wls,vrad2s - np.median(vrad2s[11:14]))
             ax.set_xlabel('middle of wavelength range [Å]')
             ax.set_ylabel('Radial velocity [km/s]')
             ax.set_title(f'vrads offset by median to show systematics')  
@@ -168,6 +168,7 @@ def find_rv_time(ID,log_path,data_type,plotting=True,ask_for_limits=True):
 
 
             #Stating what wavelength range is good
+            '''
             limit_path = f'/home/lakeclean/Documents/speciale/target_analysis/'
             limit_path += f'{all_IDs[i]}/{date[:len("2017-06-04")]}/data/limits.txt'
             if ask_for_limits:
@@ -192,6 +193,9 @@ def find_rv_time(ID,log_path,data_type,plotting=True,ask_for_limits=True):
                 start = df['start'].to_numpy()[0]
                 end = df['end'].to_numpy()[0]
                 print(f'The prechosen limits are: [{start},{end}]')
+            '''
+            start = 3900 #Ångstrom
+            end = 4845 #Ångstrom
                 
             
                 

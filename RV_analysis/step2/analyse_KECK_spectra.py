@@ -250,7 +250,7 @@ def analyse_spectrum(folder,target_name, template='MS',start_order=1, append_to_
 
         #find the order of the file:
         ccd = int(files[i].split('_')[2])
-        if ccd in [2,3]: continue
+        #if ccd in [2,3]: continue
         order = int(files[i].split('_')[3])
         ccds[i] = ccd
         orders[i] = order
@@ -570,9 +570,9 @@ for folder in folder_paths:
             k+=1
             start_order=1
             show_bin_plots=False
-            save_data=False
+            save_data=True
             save_plots=False
-            show_plots=True
+            show_plots=False
             rotbf_fit_print_report=False
             target_name = 'KIC10454113'
             analyse_spectrum(folder,target_name =target_name, SB_type = 1, start_order=start_order,
