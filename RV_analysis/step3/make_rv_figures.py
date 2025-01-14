@@ -11,6 +11,7 @@ from convert_to_Campbell import find_Campbell
 from astroquery.vizier import Vizier
 from ophobningslov import *
 import make_table_of_target_info as mt
+master_path = '/usr/users/au662080'
 
 #KIC10454113:
 V_litt = [-22.69,-20.683]
@@ -57,7 +58,7 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
     '''
 
     
-    df = pd.read_csv(f'/home/lakeclean/Documents/speciale/rv_data/NOT_{ID}.txt')
+    df = pd.read_csv(f'{master_path}/Speciale/data/rv_data/NOT_{ID}.txt')
     rv_names = ['jd','date','rv1','rv2','e_rv1','e_rv2','vbary']
     epoch_rv1s = df['rv1'].to_numpy()
     epoch_rv2s = df['rv2'].to_numpy()
@@ -68,7 +69,7 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
     epoch_vbary = df['vbary'].to_numpy()
 
     try:
-        df = pd.read_csv(f'/home/lakeclean/Documents/speciale/rv_data/NOT_{ID}.txt')
+        df = pd.read_csv(f'{master_path}/Speciale/data/rv_data/NOT_{ID}.txt')
         NOT_rv1s = df['rv1'].to_numpy()
         NOT_rv2s = df['rv2'].to_numpy()
         NOT_rv1_errs = df['e_rv1'].to_numpy()
@@ -80,7 +81,7 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
         pass
 
     try:
-        df = pd.read_csv(f'/home/lakeclean/Documents/speciale/rv_data/TNG_{ID}.txt')
+        df = pd.read_csv(f'{master_path}/Speciale/data/rv_data/TNG_{ID}.txt')
         TNG_rv1s = df['rv1'].to_numpy()
         TNG_rv2s = df['rv2'].to_numpy()
         TNG_rv1_errs = df['e_rv1'].to_numpy()
@@ -101,7 +102,7 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
         pass
 
     try:
-        df = pd.read_csv(f'/home/lakeclean/Documents/speciale/rv_data/NOT_old_HIRES_{ID}.txt')
+        df = pd.read_csv(f'{master_path}/Speciale/data/rv_data/NOT_old_HIRES_{ID}.txt')
         NOT_old_HIRES_rv1s = df['rv1'].to_numpy()
         NOT_old_HIRES_rv2s = df['rv2'].to_numpy()
         NOT_old_HIRES_rv1_errs = df['e_rv1'].to_numpy()
@@ -109,19 +110,21 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
         NOT_old_HIRES_jds = df['jd'].to_numpy()- 2457000 #The correction Frank likes
         NOT_old_HIRES_dates = df['date'].to_numpy()
         NOT_old_HIRES_vbary = df['vbary'].to_numpy()
+
+        if True:
+            epoch_rv1s = np.append(epoch_rv1s,NOT_old_HIRES_rv1s,axis=0)
+            epoch_rv2s = np.append(epoch_rv2s,NOT_old_HIRES_rv2s,axis=0)
+            epoch_rv1_errs = np.append(epoch_rv1_errs,NOT_old_HIRES_rv1_errs,axis=0)
+            epoch_rv2_errs = np.append(epoch_rv2_errs,NOT_old_HIRES_rv2_errs,axis=0)
+            epoch_jds = np.append(epoch_jds,NOT_old_HIRES_jds,axis=0)
+            epoch_dates = np.append(epoch_dates,NOT_old_HIRES_dates,axis=0)
+            epoch_vbary = np.append(epoch_vbary,NOT_old_HIRES_vbary,axis=0)
         
-        epoch_rv1s = np.append(epoch_rv1s,NOT_old_HIRES_rv1s,axis=0)
-        epoch_rv2s = np.append(epoch_rv2s,NOT_old_HIRES_rv2s,axis=0)
-        epoch_rv1_errs = np.append(epoch_rv1_errs,NOT_old_HIRES_rv1_errs,axis=0)
-        epoch_rv2_errs = np.append(epoch_rv2_errs,NOT_old_HIRES_rv2_errs,axis=0)
-        epoch_jds = np.append(epoch_jds,NOT_old_HIRES_jds,axis=0)
-        epoch_dates = np.append(epoch_dates,NOT_old_HIRES_dates,axis=0)
-        epoch_vbary = np.append(epoch_vbary,NOT_old_HIRES_vbary,axis=0)
     except:
         pass
 
     try:
-        df = pd.read_csv(f'/home/lakeclean/Documents/speciale/rv_data/NOT_old_LOWRES_{ID}.txt')
+        df = pd.read_csv(f'{master_path}/Speciale/data/rv_data/NOT_old_LOWRES_{ID}.txt')
         NOT_old_LOWRES_rv1s = df['rv1'].to_numpy()
         NOT_old_LOWRES_rv2s = df['rv2'].to_numpy()
         NOT_old_LOWRES_rv1_errs = df['e_rv1'].to_numpy()
@@ -130,18 +133,20 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
         NOT_old_LOWRES_dates = df['date'].to_numpy()
         NOT_old_LOWRES_vbary = df['vbary'].to_numpy()
 
-        epoch_rv1s = np.append(epoch_rv1s,NOT_old_LOWRES_rv1s,axis=0)
-        epoch_rv2s = np.append(epoch_rv2s,NOT_old_LOWRES_rv2s,axis=0)
-        epoch_rv1_errs = np.append(epoch_rv1_errs,NOT_old_LOWRES_rv1_errs,axis=0)
-        epoch_rv2_errs = np.append(epoch_rv2_errs,NOT_old_LOWRES_rv2_errs,axis=0)
-        epoch_jds = np.append(epoch_jds,NOT_old_LOWRES_jds,axis=0)
-        epoch_dates = np.append(epoch_dates,NOT_old_LOWRES_dates,axis=0)
-        epoch_vbary = np.append(epoch_vbary,NOT_old_LOWRES_vbary,axis=0)
+        if True:
+            epoch_rv1s = np.append(epoch_rv1s,NOT_old_LOWRES_rv1s,axis=0)
+            epoch_rv2s = np.append(epoch_rv2s,NOT_old_LOWRES_rv2s,axis=0)
+            epoch_rv1_errs = np.append(epoch_rv1_errs,NOT_old_LOWRES_rv1_errs,axis=0)
+            epoch_rv2_errs = np.append(epoch_rv2_errs,NOT_old_LOWRES_rv2_errs,axis=0)
+            epoch_jds = np.append(epoch_jds,NOT_old_LOWRES_jds,axis=0)
+            epoch_dates = np.append(epoch_dates,NOT_old_LOWRES_dates,axis=0)
+            epoch_vbary = np.append(epoch_vbary,NOT_old_LOWRES_vbary,axis=0)
+        
     except:
         pass
 
     try:
-        df = pd.read_csv(f'/home/lakeclean/Documents/speciale/rv_data/KECK_{ID}.txt')
+        df = pd.read_csv(f'{master_path}/Speciale/data/rv_data/KECK_{ID}.txt')
         KECK_vbary = df['vbary'].to_numpy()
         KECK_rv1s = df['rv1'].to_numpy() - KECK_vbary
         KECK_rv2s = df['rv2'].to_numpy() - KECK_vbary
@@ -158,6 +163,7 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
         epoch_dates = np.append(epoch_dates,KECK_dates,axis=0)
         epoch_vbary = np.append(epoch_vbary,KECK_vbary,axis=0)
         '''
+        
     except:
         pass
 
@@ -219,6 +225,7 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
             pass
 
         try:
+            pass
             ax[0].errorbar(KECK_jds, KECK_rv1s, KECK_rv1_errs,
                        fmt='o',capsize=2,color='pink')
             ax[0].errorbar(KECK_jds, KECK_rv2s, KECK_rv2_errs,
@@ -226,10 +233,20 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
         except:
             pass
 
-        ax[0].errorbar(V_litt_time, V_litt, e_V_litt,
-                   fmt='o',capsize=2,color='red',label='SIMBAD: GAIA/APOGEE')
-        ax[0].scatter(-1190.4594305553474,-32.545914715462075,
-                      label='2.dary component', color='black')
+
+        #Random stuff:
+        if False:
+            ax[0].errorbar(V_litt_time, V_litt, e_V_litt,
+                       fmt='o',capsize=2,color='red',label='SIMBAD: GAIA/APOGEE')
+            ax[0].scatter(-1190.4594305553474,-32.545914715462075,
+                          label='2.dary component', color='black')
+
+            
+            extra_times = ['2010-07-08 02:35:07','2010-09-01 23:15:06','2011-07-12 22:03:22',
+                               '2011-07-19 03:54:56','2011-08-10 03:09:20','2013-06-15 01:29:45',
+                               '2013-09-09 22:08:58']
+            for extra_time in extra_times:
+                ax[0].vlines(Time(extra_time).jd-2457000,-40,20,ls='--',color='black')
             
 
     else:
@@ -270,10 +287,11 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
         except:
             pass
 
-        ax[0].errorbar(V_litt_time, V_litt, e_V_litt,
-                   fmt='o',capsize=2,color='red',label='SIMBAD: GAIA/APOGEE')
-        ax[0].scatter(-1190.4594305553474,-32.545914715462075,
-                      label='2.dary component', color='black')
+        #ax[0].errorbar(V_litt_time, V_litt, e_V_litt,
+        #           fmt='o',capsize=2,color='red',label='SIMBAD: GAIA/APOGEE')
+        #ax[0].scatter(-1190.4594305553474,-32.545914715462075,
+        #              label='2.dary component', color='black')
+
 
         
 
@@ -441,7 +459,7 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
 
         
 
-    plot_path = f'/home/lakeclean/Documents/speciale/rv_plots/{ID}/'
+    plot_path = f'{master_path}/Speciale/data/rv_plots/{ID}/'
     if save_plot: fig.savefig(plot_path+f"rv_time_{ID}.pdf",
                                    dpi='figure', format='pdf')
                   
@@ -527,7 +545,7 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
     
     if (print_mass ==True):
 
-        T_Innes_path = '/home/lakeclean/Documents/speciale/thiele_innes_elements.txt'
+        T_Innes_path = f'{master_path}/Speciale/data/thiele_innes_elements.txt'
         df = pd.read_csv(T_Innes_path).to_numpy()
         for line in df:
             if line[0] == ID:
@@ -607,6 +625,7 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
                        fmt='o',capsize=2,color='green')
             except:
                 pass
+            #Old NOT LOWRES
             try:
                 ax[0].errorbar(NOT_old_LOWRES_jds%p, NOT_old_LOWRES_rv1s, NOT_old_LOWRES_rv1_errs,
                            fmt='o',capsize=2,color='purple')
@@ -614,7 +633,7 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
                            fmt='o',capsize=2,color='purple')
             except:
                 pass
-        
+            #Old NOT HIRES
             try:
                 ax[0].errorbar(NOT_old_HIRES_jds%p, NOT_old_HIRES_rv1s, NOT_old_HIRES_rv1_errs,
                            fmt='o',capsize=2,color='purple')
@@ -622,6 +641,27 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
                            fmt='o',capsize=2,color='purple',label='old NOT')
             except:
                 pass
+
+            #KECK
+            try:
+                ax[0].errorbar(KECK_jds%p, KECK_rv1s, KECK_rv1_errs,
+                           fmt='o',capsize=2,color='pink',label='KECK')
+
+            except:
+                pass
+
+
+            #Random stuff:
+            if True:
+                extra_times = ['2010-07-08 02:35:07','2010-09-01 23:15:06','2011-07-12 22:03:22',
+                               '2011-07-19 03:54:56','2011-08-10 03:09:20','2013-06-15 01:29:45',
+                               '2013-09-09 22:08:58']
+                extra_times = ['2010-07-08 04:50:33','2010-09-02 01:22:13','2011-07-21 02:08:08',
+                               '2013-06-15 03:50:58','2013-09-10 00:29:24']
+                extra_times = ['2011-06-15 23:00:28','2011-08-10 00:57:55']
+                extra_times = ['2009-06-05 01:28:56','2009-08-25 21:26:17']
+                for extra_time in extra_times:
+                    ax[0].vlines((Time(extra_time).jd-2457000)%p,-40,20,ls='--',color='black')
             
 
 
@@ -707,7 +747,7 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
             ax.set_xlabel(f'orbital phase jd%{np.round(orbital_period,2)} [days]')
 
 
-        plot_path = f'/home/lakeclean/Documents/speciale/rv_plots/{ID}/'
+        plot_path = f'{master_path}/Speciale/data/rv_plots/{ID}/'
         if save_plot: fig.savefig(plot_path+f"rv_phase_{ID}.pdf",
                                    dpi='figure', format='pdf')
         if show_plot: plt.show()
@@ -716,9 +756,12 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
 
     ############################# River Plot: #######################################
     if make_river_plot:
-        path = '/home/lakeclean/Documents/speciale/target_analysis/'
+        path = f'{master_path}/Speciale/data/target_analysis/'
 
-        #We construct a list of the 30th order for all the times of the star
+        #Only considering new NOT data. or else it becomes cluttered.
+        NOT_path = f'{master_path}/Speciale/data/NOT_order_file_log.txt'
+        NOT_dates = pd.read_csv(NOT_path)['date'].to_numpy()
+
         date_len = len(path + ID)+1
         target_dates = glob.glob(path + ID + '/*')
         folder_dates = []
@@ -726,7 +769,8 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
         for epoch_date in epoch_dates:
             for target_date in target_dates:
                 if epoch_date == target_date[date_len:]:
-                    folder_dates.append(path + ID + f'/{epoch_date}')
+                    if epoch_date in NOT_dates:
+                        folder_dates.append(path + ID + f'/{epoch_date}')
         
         print(path + ID + '/*')
 
@@ -764,7 +808,7 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
         #smoothed = smoothed**(1/nr_order_in_mean) #Geometric mean
         smoothed = smoothed/nr_order_in_mean #Artihmetic mean
 
-        dates = np.array(dates) - 2457000 # Time the way Frank likes
+        dates = np.array(dates) % p # It only makes sense to plot phase
 
         fig,ax = plt.subplots()
         levels = np.linspace(scale_river[0],scale_river[1],scale_river[2])
@@ -786,7 +830,7 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
 
         if len(fit_params)>0:
             #ax.set_xlabel(f'orbital phase jd%{np.round(p,2)} [days]')
-            proxy_time = np.linspace(min(epoch_jds),max(epoch_jds),1000)
+            proxy_time = np.linspace(min(dates),max(dates),1000)
         
             if SB_type == 1:
                 fit_rvs = sb.radial_velocity(proxy_time,k=k,e=e,w=w,p=p,t0=t0,v0=v0)
@@ -802,48 +846,52 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
                 fit_rv1s = sb.radial_velocity(proxy_time,k=-k2,e=e,w=w,p=p,t0=t0,v0=v02)
                 ax.plot(fit_rv1s,proxy_time)
                 
-                ax.plot([v01,v01],[min(epoch_jds),max(epoch_jds)],color='blue',alpha=0.4,ls='--',
+                ax.plot([v01,v01],[min(dates),max(dates)],color='blue',alpha=0.4,ls='--',
                     label=f'v01 = {np.round(v01,2)}')
-                ax.plot([v02,v02],[min(epoch_jds),max(epoch_jds)],color='green',alpha=0.4,ls='--',
+                ax.plot([v02,v02],[min(dates),max(dates)],color='green',alpha=0.4,ls='--',
                     label=f'v02 = {np.round(v02,2)}')
                 ax.set_xlim(v01-100,v01+100)
         
         ax.legend()
         
         
-        plot_path = f'/home/lakeclean/Documents/speciale/rv_plots/{ID}/'
+        plot_path = f'{master_path}/Speciale/data/rv_plots/{ID}/'
         if save_plot: fig.savefig(plot_path+f"river_plot_{ID}.pdf",
                                    dpi='figure', format='pdf')
         if show_plot: plt.show()
         plt.close()
 
+#KIC9693187
+if True:
+    plot_rv_time('KIC9693187',fit_params=[29,26,0.9,50,104,-9],limits=[20,60],SB_type=2,
+                 orbital_period=100, show_plot=True,save_plot=True, report_fit=True,
+                 make_phase_plot=True,make_river_plot=True, scale_river=[-0.0005,0.08,100],
+                 make_table=True,print_mass = True,exclude_points=10,
+                 res1=3)
 
-    
-        
-        
 
+       
 
-'''
 #KIC12317678
-if False:
+if True:
     plot_rv_time('KIC12317678',fit_params=[18,26,0.3,100,82,-41],limits=[20,60],SB_type=2,
                  orbital_period=100, show_plot=True,save_plot=True, report_fit=True,
-                 make_phase_plot=True,make_river_plot=True, scale_river=[-0.0005,0.01,100],
+                 make_phase_plot=True,make_river_plot=False, scale_river=[-0.0005,0.01,100],
                  make_table=True,print_mass = True,exclude_points=12,
                  res1 = 3)
 
 
 
 #KIC9693187
-if False:
-    plot_rv_time('KIC9693187',fit_params=[29,26,0.5,50,104,-9],limits=[20,60],SB_type=2,
-                 orbital_period=100, show_plot=False,save_plot=True, report_fit=True,
+if True:
+    plot_rv_time('KIC9693187',fit_params=[29,26,0.9,50,104,-9],limits=[20,60],SB_type=2,
+                 orbital_period=100, show_plot=True,save_plot=True, report_fit=True,
                  make_phase_plot=True,make_river_plot=True, scale_river=[-0.0005,0.08,100],
                  make_table=True,print_mass = True,exclude_points=10,
                  res1=3)
 
 #KIC4914923
-if False:
+if True:
     plot_rv_time('KIC4914923',fit_params=[15,0.2,105,99,-24],limits=[20,60],SB_type=1,
                  orbital_period=100, show_plot=True,save_plot=True, report_fit=True,
                  make_phase_plot=True,make_river_plot=True, scale_river=[-0.0005,0.14,100],
@@ -851,15 +899,15 @@ if False:
                  res1=8)
 
 
-#KIC-9025370
-if False:
+#KIC9025370
+if True:
     plot_rv_time('KIC9025370',fit_params=[16,16,0.271,200,239,-14],limits=[20,60],SB_type=2,
                  orbital_period=100, show_plot=True,save_plot=True, report_fit=True,
                  make_phase_plot=True,make_river_plot=False, scale_river=[-0.0005,0.14,100],
                  make_table=True,print_mass=True,exclude_points=12,
                  res1=4,res_off1=-0.04,res2=4,res_off2=0.03)
 
-'''
+
 #KIC10454113
 if True:
     plot_rv_time('KIC10454113',fit_params=[16,0.8,100,6000,-20],SB_type=1,
@@ -869,15 +917,15 @@ if True:
 
 
 #KIC4457331
-if False:
+if True:
     plot_rv_time('KIC4457331',fit_params=[],limits=[20,60],SB_type=1,
-                 orbital_period=100, show_plot=False,save_plot=True, report_fit=True,
+                 orbital_period=100, show_plot=True,save_plot=True, report_fit=True,
                  make_phase_plot=False,make_river_plot=True, scale_river=[-0.0005,0.08,100],
                  make_table=True,
                  find_rv=True)
 
 
-'''
+
 #EPIC-246696804
 if True:
     plot_rv_time('EPIC246696804',fit_params=[],limits=[20,60],SB_type=1,
@@ -917,12 +965,11 @@ if True:
                  make_phase_plot=False,make_river_plot=True, scale_river=[-0.0005,0.14,100],
                  make_table=True,
                  find_rv=True)
-'''
-'''
+
 #KIC4260884
 if True:
     plot_rv_time('KIC4260884',fit_params=[],limits=[20,60],SB_type=1,
-                 orbital_period=100, show_plot=False,save_plot=True, report_fit=True,
+                 orbital_period=100, show_plot=True,save_plot=True, report_fit=True,
                  make_phase_plot=False,make_river_plot=True, scale_river=[-0.0005,0.14,100],
                  make_table=True,
                  find_rv=True)
@@ -930,7 +977,7 @@ if True:
 #KIC9652971
 if True:
     plot_rv_time('KIC9652971',fit_params=[],limits=[20,60],SB_type=1,
-                 orbital_period=100, show_plot=False,save_plot=True, report_fit=True,
+                 orbital_period=100, show_plot=True,save_plot=True, report_fit=True,
                  make_phase_plot=False,make_river_plot=True, scale_river=[-0.001,0.08,100],
                  make_table=True,
                  find_rv=True)
@@ -938,11 +985,11 @@ if True:
 #KIC4260884
 if True:
     plot_rv_time('HD208139',fit_params=[],limits=[20,60],SB_type=1,
-                 orbital_period=100, show_plot=False,save_plot=True, report_fit=True,
+                 orbital_period=100, show_plot=True,save_plot=True, report_fit=True,
                  make_phase_plot=False,make_river_plot=True, scale_river=[-0.0005,0.14,100],
                  make_table=True,
                  find_rv=True)
-'''
+
 
 
 #Really good guesses:

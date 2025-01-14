@@ -4,7 +4,7 @@ import numpy as np
 from astropy.table import Table
 
 
-table_path = '/home/lakeclean/Documents/speciale/table_of_info.dat'
+table_path = '~/Speciale/data/table_of_info.dat'
 
 
 

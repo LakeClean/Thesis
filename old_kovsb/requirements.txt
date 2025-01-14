@@ -1,0 +1,9 @@
+numpy
+matplotlib
+emcee
+tdqm
+corner
+scipy==1.12.0
+arviz
+ipython
+pyqt5

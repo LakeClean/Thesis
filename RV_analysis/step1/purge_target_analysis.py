@@ -5,9 +5,9 @@ import sys
 #KECK :
 #BE CAREFUL RUNNING THIS CODE! WILL DELETE INFORMATION!
 
-path = '/home/lakeclean/Documents/speciale/target_analysis/'
+path = '~/Special/data/target_analysis/'
 
-info_file = open('/home/lakeclean/Documents/speciale/KECK_order_file_log.txt').read().split('\n')
+info_file = open('~/Special/data/KECK_order_file_log.txt').read().split('\n')
 
 IDs = []
 dates = []

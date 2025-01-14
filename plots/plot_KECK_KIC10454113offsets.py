@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-path = '/home/lakeclean/Documents/speciale/target_analysis/KIC10454113'
+path = '/usr/users/au662080/Speciale/data/target_analysis/KIC10454113'
 folders = glob.glob(f'{path}/2*')
 
 folders = [x for x in folders if len(x) <len(path)+len('2017-06-28')+2]

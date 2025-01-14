@@ -8,7 +8,7 @@ from scipy import optimize as OP
 from matplotlib.colors import LogNorm
 from matplotlib import cm
 import glob
-folder_path = '/home/lakeclean/Documents/speciale/Seismology/data/'
+folder_path = '~/Special/data/Seismology/data/'
 
 ###### 1) #######
 #Importing lightcurve data:

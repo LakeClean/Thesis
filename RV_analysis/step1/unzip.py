@@ -15,7 +15,7 @@ Probably....
 
 #NOT:
 
-path = '/home/lakeclean/Documents/speciale/old/'
+path = '~/Special/data/old/'
 
 zipedfiles = glob.glob(f'{path}reduced*')
 
@@ -42,7 +42,7 @@ for zipedfile in zipedfiles:
 
 files = glob.glob(temporary_dir + '/*')
 
-final_dir = '/home/lakeclean/Documents/speciale/initial_data/NOT/'
+final_dir = '~/Special/data/initial_data/NOT/'
 
 
 
@@ -72,12 +72,12 @@ os.rmdir(temporary_dir)
 
 '''
 #When files are not zipped
-path = '/home/lakeclean/Documents/speciale/initial_data/NOT_old/'
+path = '~/Special/data/initial_data/NOT_old/'
 
 files = glob.glob(f'{path}*wave.fits')
 
 
-final_dir = '/home/lakeclean/Documents/speciale/initial_data/NOT/'
+final_dir = '~/Special/data/initial_data/NOT/'
 
 
 

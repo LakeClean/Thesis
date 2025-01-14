@@ -43,7 +43,7 @@ for taredfile in taredfiles:
 files = glob.glob(temporary_dir + '/*')
 
 print(files)
-final_dir = '/home/lakeclean/Documents/speciale/initial_data/TNG/'
+final_dir = '~/Special/data/initial_data/TNG/'
 
 
 
@@ -91,7 +91,7 @@ for folder in folders:
 
 print(files)
 
-final_dir = '/home/lakeclean/Documents/speciale/initial_data/KECK/KIC9693187/'
+final_dir = '~/Special/data/initial_data/KECK/KIC9693187/'
 
 length = len('/home/lakeclean/Downloads/KOA_126090/HIRES/extracted/binaryfits/ccd1/flux')
 
@@ -120,7 +120,7 @@ for file in files:
 
 #ESpaDOns:
 '''
-path = '/home/lakeclean/Documents/speciale/initial_data/ESPaDOns/CFHT*'
+path = '~/Special/data/initial_data/ESPaDOns/CFHT*'
 folders = glob.glob(path)
 all_files = []
 for folder in folders:
@@ -130,7 +130,7 @@ for folder in folders:
             all_files.append(file)
 
 
-final_dir = '/home/lakeclean/Documents/speciale/initial_data/ESPaDOns/'
+final_dir = '~/Special/data/initial_data/ESPaDOns/'
 
 length = len(path)+1
 

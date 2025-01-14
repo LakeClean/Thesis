@@ -1,14 +1,15 @@
 import os
 import glob
 import sys
+master_path = '/usr/users/au662080'
 
 #Making folders for data to be filled by other script:
 
 #NOT data:
 
-path = '/home/lakeclean/Documents/speciale/target_analysis/'
+path = f'{master_path}/Speciale/data/target_analysis/'
 
-info_file = open('/home/lakeclean/Documents/speciale/NOT_order_file_log.txt').read().split('\n')
+info_file = open(f'{master_path}/Speciale/data/NOT_order_file_log.txt').read().split('\n')
 
 IDs = []
 dates = []
@@ -49,9 +50,9 @@ for i in old:
 
 
 #TNG (HARPS):
-path = '/home/lakeclean/Documents/speciale/target_analysis/'
+path = f'{master_path}/Speciale/data/target_analysis/'
 
-info_file = open('/home/lakeclean/Documents/speciale/TNG_merged_file_log.txt').read().split('\n')
+info_file = open(f'{master_path}/Speciale/data/TNG_merged_file_log.txt').read().split('\n')
 
 IDs = []
 dates = []
@@ -117,9 +118,9 @@ if name[0] != 'all' and len(name) == 1:
 
 '''
 #KECK :
-path = '/home/lakeclean/Documents/speciale/target_analysis/'
+path = f'{master_path}/Speciale/data/target_analysis/'
 
-info_file = open('/home/lakeclean/Documents/speciale/KECK_order_file_log.txt').read().split('\n')
+info_file = open(f'{master_path}/Speciale/data/KECK_order_file_log.txt').read().split('\n')
 
 IDs = []
 dates = []
@@ -154,9 +155,9 @@ for i in old:
 
 
 #CFHT (ESpaDOns):
-path = '/home/lakeclean/Documents/speciale/target_analysis/'
+path = f'{master_path}/Speciale/data/target_analysis/'
 
-info_file = open('/home/lakeclean/Documents/speciale/ESpaDOns_merged_file_log.txt').read().split('\n')
+info_file = open(f'{master_path}/Speciale/data/ESpaDOns_merged_file_log.txt').read().split('\n')
 
 IDs = []
 dates = []

@@ -9,7 +9,7 @@ from astropy.time import Time
 from scipy.signal import find_peaks
 import shazam
 
-path = f'/home/lakeclean/Documents/speciale/order_file_log.txt'
+path = f'~/Speciale/data/order_file_log.txt'
 
 lines= open(path).read().split('\n')
 all_IDs, all_dates, all_vhelios,files, all_vbary= [], [], [], [], []
@@ -51,7 +51,7 @@ consts= np.zeros(shape= (len(files),91))
 for i,date in enumerate(all_dates):
         
     
-    path = f'/home/lakeclean/Documents/speciale/target_analysis/'+ f'{all_IDs[i]}/{date}/data/bf_fit_params.txt'
+    path = f'~/Speciale/data/target_analysis/'+ f'{all_IDs[i]}/{date}/data/bf_fit_params.txt'
     
     date = all_dates[i]
     mjds[i] = Time(date).mjd

@@ -4,7 +4,7 @@ import glob
 import numpy as np
 import matplotlib.pyplot as plt
 
-TNG_path = '/home/lakeclean/Documents/speciale/TNG_merged_file_log.txt'
+TNG_path = '~/Speciale/data/TNG_merged_file_log.txt'
 
 TNG_df = pd.read_csv(TNG_path)
 index = [0,1,2,6,7]
@@ -15,7 +15,7 @@ print(TNG_df['ID'].to_numpy()[index])
 print(v_barys)
 
 '''
-NOT_path = '/home/lakeclean/Documents/speciale/NOT_order_file_log.txt'
+NOT_path = '~/Speciale/data/NOT_order_file_log.txt'
 
 NOT_df = pd.read_csv(NOT_path)
 '''
@@ -26,7 +26,7 @@ def wavelength_corr(wl,vbary=0):
 
 print(wavelength_corr(6080,0.5))
 
-path = '/home/lakeclean/Documents/speciale/target_analysis/KIC10454113/'
+path = '~/Speciale/data/target_analysis/KIC10454113/'
 
 TNG_files = []
 

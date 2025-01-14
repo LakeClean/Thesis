@@ -7,22 +7,26 @@ import make_table_of_target_info as mt
 from astropy import units as u
 from astropy.coordinates import SkyCoord
 
+master_path = '/usr/users/au662080'
+
+black_list = ['2017-07-05']
+
 
 #Sorting based on date:
 def mySort(x):
     x = x.split(',')
     return x[2]
 
-pm_dir = '/home/lakeclean/Documents/speciale/propermotion_parallax.txt'
+pm_dir = f'{master_path}/Speciale/data/propermotion_parallax.txt'
 pm_lines = open(pm_dir).read().split('\n')
 
 
 target_ID = 'KIC10454113'
 
-directory = f'/home/lakeclean/Documents/speciale/initial_data/KECK/{target_ID}'
+directory = f'{master_path}/Speciale/data/initial_data/KECK/{target_ID}'
 folders = glob.glob(f'{directory}/*')
 print(folders)
-f = open('/home/lakeclean/Documents/speciale/KECK_order_file_log.txt','w')
+f = open(f'{master_path}/Speciale/data/KECK_order_file_log.txt','w')
 head = "ID,directory,date,T_exp,"
 head = head + "ra,dec,lat,longi,alt,pmra,pmdec,px"
 head = head + ",epoch_jd,v_bary,TELESCOP"
@@ -30,6 +34,9 @@ f.write(head+"\n")
 info = []
 
 for folder in folders:
+        if folder.split('/')[-1] in black_list:
+            print(folder.split('/')[-1], 'is blacklisted')
+            continue
 
         files = glob.glob(f'{folder}/HI*') #importing unaltered files
         file = files[0] # Taking the first order of the day

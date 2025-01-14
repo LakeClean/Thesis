@@ -8,7 +8,7 @@ def get_goettingen():
     import astropy.io.fits as fits
     import numpy as np
 
-    directory  = '/home/lakeclean/Documents/speciale/templates/goettingen/'
+    directory  = '~/Speciale/data/templates/goettingen/'
     atlas_file = directory + 'goettingen_sun_visual.fits'
     atlas      = fits.getdata( atlas_file, 1 )
     wavenum0   = np.flip( atlas[ 'wavenum' ] )

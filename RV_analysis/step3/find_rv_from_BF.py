@@ -12,8 +12,10 @@ from astroquery.vizier import Vizier
 from ophobningslov import *
 import make_table_of_target_info as mt
 
+master_path = '/usr/users/au662080'
 
-#f'/home/lakeclean/Documents/speciale/TNG_merged_file_log.txt'
+
+#f'{master_path}/Speciale/data/TNG_merged_file_log.txt'
 def find_rv_time(ID,log_path,data_type, limits=[0,-1],plot_offset=True):
     '''
     Function for plotting the radial velocity plot.
@@ -63,11 +65,11 @@ def find_rv_time(ID,log_path,data_type, limits=[0,-1],plot_offset=True):
             return x,fitted_line(x),slope
 
         #Finding the number of bins:
-        lines = open(f'/home/lakeclean/Documents/speciale/target_analysis/'+ f'{all_IDs[0]}/{all_dates[0]}/data/bf_fit_params.txt').read().split('\n')[1:-1]
+        lines = open(f'{master_path}/Speciale/data/target_analysis/'+ f'{all_IDs[0]}/{all_dates[0]}/data/bf_fit_params.txt').read().split('\n')[1:-1]
         n_bins = len(lines)
         print(f'Analyzing target: {ID}')
         print(f'Using the logfile: {log_path}')
-        print(f'RV-data will be saved as: "/home/lakeclean/Documents/speciale/rv_data/{data_type}_{ID}.txt" ')
+        print(f'RV-data will be saved as: "{master_path}/Speciale/data/rv_data/{data_type}_{ID}.txt" ')
         print(f'Number of bins: {n_bins}')
 
         rvs = np.zeros(shape= (len(files),4))
@@ -90,7 +92,7 @@ def find_rv_time(ID,log_path,data_type, limits=[0,-1],plot_offset=True):
         flux_levels = []
         #Going through each file
         for i,date in enumerate(all_dates):
-            path = f'/home/lakeclean/Documents/speciale/target_analysis/'+ f'{all_IDs[i]}/{date}/data/bf_fit_params.txt'
+            path = f'{master_path}/Speciale/data/target_analysis/'+ f'{all_IDs[i]}/{date}/data/bf_fit_params.txt'
             date = all_dates[i]
             jds[i] = Time(date).jd #Correcting jd the way Frank likes. Something to with Tess.
             v_bary = all_vbary[i]
@@ -144,8 +146,8 @@ def find_rv_time(ID,log_path,data_type, limits=[0,-1],plot_offset=True):
                     
 
 
-            offset1s[i,:] = np.median(vrad1s[i]) - vrad1s[i]
-            offset2s[i,:] = np.median(vrad2s[i]) - vrad2s[i]
+            offset1s[i,:] = np.median(vrad1s[i][limits[0]:limits[-1]]) - vrad1s[i]
+            offset2s[i,:] = np.median(vrad2s[i][limits[0]:limits[-1]]) - vrad2s[i]
 
             spectral_type = 1
             for k, j in zip(vrad1s[i],vrad2s[i]):
@@ -163,17 +165,21 @@ def find_rv_time(ID,log_path,data_type, limits=[0,-1],plot_offset=True):
             
                 
         #The offset for each order based on every file  
-        offsets_median = np.median(offsets,axis=0)
+        #offsets_median = np.median(offsets,axis=0)
+        weights = 1/pow((np.std(offsets,axis=0)/np.sqrt(offsets.shape[0])),2) #following book
+        
         if plot_offset:
             fig,ax = plt.subplots()
             for i in range(len(vrad1s[:,0])):
                 ax.scatter(range(len(offsets[i,:])),offsets[i,:])
 
+                    
+                    
+            ax.vlines(limits[0],-100,100,ls='--',color='b')
+            ax.vlines(limits[-1],-100,100,ls='--',color='b')
             plt.show()
             plt.close()
         
-        weight1s = np.std(offsets,axis=0)
-        weight2s = np.std(offsets,axis=0) #Relic of before offsets were evaluated on the same basis
 
         epoch_rv1s = []
         epoch_rv2s = []
@@ -191,10 +197,13 @@ def find_rv_time(ID,log_path,data_type, limits=[0,-1],plot_offset=True):
         epoch_ampl1s = []
         epoch_ampl2s = []
         epoch_consts = []
+
         
         for i,all_ID in enumerate(all_IDs):
             if not ID == all_ID:
                 continue
+
+            print(all_dates[i])
 
             #We choose the vsini as the mean of the order vsini's that lie in good range:
             mean_vsini1 = np.mean(vsini1s[i][limits[0]:limits[1]])
@@ -218,52 +227,37 @@ def find_rv_time(ID,log_path,data_type, limits=[0,-1],plot_offset=True):
             epoch_vbary.append(all_vbary[i])
 
             #Correcting vrads for NOT wavelength issue
-            corr_vrad1s = vrad1s[i]+offsets_median
-            corr_vrad2s = vrad2s[i]+offsets_median
+            
+            #corr_vrad1s = vrad1s[i]
+            #corr_vrad2s = vrad2s[i]
 
             #Selecting the best region of orders
-            corr_vrad1s = corr_vrad1s[limits[0]:limits[1]]
-            corr_vrad2s = corr_vrad2s[limits[0]:limits[1]]
-            corr_weight1s = weight1s[limits[0]:limits[1]]
-            corr_weight2s = weight2s[limits[0]:limits[1]]
-
-            #picking out outliers
-            good_vrad1s = []
-            good_vrad2s = []
-            good_weight1s = []
-            good_weight2s = []
-            for y1,y2,w1,w2 in zip(corr_vrad1s,corr_vrad2s,corr_weight1s,corr_weight2s):
-                
-                outlier_limit = 5
-                temp_median1 = np.median(corr_vrad1s)
-                temp_median2 = np.median(corr_vrad2s)
-
-                if abs(y1 - temp_median1) < outlier_limit:
-                    good_vrad1s.append(y1)
-                    good_weight1s.append(w1)
-
-                if abs(y2 - temp_median2) < outlier_limit:
-                    good_vrad2s.append(y2)
-                    good_weight2s.append(w2)
+            epoch_vrad1s = vrad1s[i][limits[0]:limits[1]]
+            epoch_vrad2s = vrad2s[i][limits[0]:limits[1]]
+            epoch_weights = weights[limits[0]:limits[1]] #same for all i
 
             #normalized weights
-            epoch_norm_weight1s = np.array(good_weight1s) / sum(np.array(good_weight1s))
-            epoch_norm_weight2s = np.array(good_weight2s) / sum(np.array(good_weight2s))
+            epoch_norm_weights = epoch_weights / sum(epoch_weights)
+            #epoch_norm_weight2s = np.array(weight2s) / sum(np.array(weight2s))
 
             #Weighted mean
-            epoch_rv1s.append(sum(np.array(good_vrad1s)*epoch_norm_weight1s))
-            epoch_rv2s.append(sum(np.array(good_vrad2s)*epoch_norm_weight2s))
+            epoch_rv1s.append(sum(epoch_vrad1s*epoch_norm_weights))
+            epoch_rv2s.append(sum(epoch_vrad2s*epoch_norm_weights))
 
             #standard err of weighted mean from unc propagation        
-            epoch_rv1_errs.append(np.std(good_vrad1s)*np.sqrt(sum(epoch_norm_weight1s**2)))#append(np.std(good_vrad1s)/np.sqrt(len(good_vrad1s)))
-            epoch_rv2_errs.append(np.std(good_vrad2s)*np.sqrt(sum(epoch_norm_weight2s**2)))#append(np.std(good_vrad2s)/np.sqrt(len(good_vrad2s)))
+            epoch_rv1_errs.append(1/np.sqrt(sum(epoch_weights)))#append(np.std(good_vrad1s)/np.sqrt(len(good_vrad1s)))
+            epoch_rv2_errs.append(1/np.sqrt(sum(epoch_weights)))#append(np.std(good_vrad2s)/np.sqrt(len(good_vrad2s)))
+            #epoch_rv1_errs.append(np.std(vrad1s)*np.sqrt(sum(epoch_norm_weights**2)))#append(np.std(good_vrad1s)/np.sqrt(len(good_vrad1s)))
+            #epoch_rv2_errs.append(np.std(vrad2s)*np.sqrt(sum(epoch_norm_weights**2)))#append(np.std(good_vrad2s)/np.sqrt(len(good_vrad2s)))
             epoch_jds.append(jds[i])
 
-        #Exemption for 'KIC-12317678' We here need to find the rv of weak component differently
+        #Exemption for 'KIC12317678' We here need to find the rv of weak component differently
         if ID == 'KIC12317678':
             distances = []
-            for k in [0,20]: #We split the spectrum into two
-                path = '/home/lakeclean/Documents/speciale/target_analysis/'
+            #for k in [ [limits[0],int(limits[1]/2)], [int(limits[1]/2),limits[1]] ]: #We split the "good" spectrum into two to get an uncertainty
+            for k in [ [20,40], [40,60] ]: #We split the "good" spectrum into two to get an uncertainty
+
+                path = f'{master_path}/Speciale/data/target_analysis/'
                 date_len = len(path + ID)+1
                 folder_dates = []
                 KIC12317678_dates = []
@@ -284,11 +278,11 @@ def find_rv_time(ID,log_path,data_type, limits=[0,-1],plot_offset=True):
                 rvs = np.zeros(shape=(401,num_dates))
 
                 # To reveal weak component we take mean of a number of spectra
-                order_sum = 20 #the number of orders that is summed
+                #order_sum = 20 #the number of orders that is summed
                 for i,folder_date in enumerate(folder_dates):
-                    for j in range(order_sum):
+                    for j in k:
                         try:
-                            df = pd.read_csv(folder_date + f'/data/order_{j+k+20}_broadening_function.txt')
+                            df = pd.read_csv(folder_date + f'/data/order_{j}_broadening_function.txt')
                         except:
                             print(folder_date+' could not be found. If 2024-07-13T00:26:25.672 then its a bad spec')
                             continue
@@ -296,10 +290,11 @@ def find_rv_time(ID,log_path,data_type, limits=[0,-1],plot_offset=True):
                         rvs[:,i] = df[:,0]
                         smoothed[i,:] += df[:,2]
                         
-                smoothed = smoothed/order_sum
+                smoothed = smoothed/(k[1]-k[0])
                 
-                IDlines = open('/home/lakeclean/Documents/speciale/spectra_log_h_readable.txt').read().split('&')
+                IDlines = open(f'{master_path}/Speciale/data/spectra_log_h_readable.txt').read().split('&')
                 SB2_IDs, SB2_dates, SB_types, vrad1_guess, vrad2_guess = [], [], [], [], []
+                
                 for IDline in IDlines[:-1]:
                     if IDline.split(',')[0][11:].strip(' ') == 'KIC12317678':
                         for line in IDline.split('\n')[2:-1]:
@@ -319,12 +314,15 @@ def find_rv_time(ID,log_path,data_type, limits=[0,-1],plot_offset=True):
                             else:
                                 vrad1_guess.append(0)
                                 vrad2_guess.append(0)
+
+                
+                
+                
                 distance = []
                 #Fitting each of the mean bfs, to find the distance between peaks
                 for i,SB_type in enumerate(SB_types):
                     if SB_type == 1:
-                        
-                        fit, model, bfgs = shazam.rotbf_fit(rvs[:,i],smoothed[i,:], 30,60000,1, 5,False)
+                        #fit, model, bfgs = shazam.rotbf_fit(rvs[:,i],smoothed[i,:], 30,60000,1, 5,False)
                         distance.append(0)
                         
                     if SB_type == 2:
@@ -345,18 +343,19 @@ def find_rv_time(ID,log_path,data_type, limits=[0,-1],plot_offset=True):
                             if vrad1 < vrad2:
                                 distance.append(-abs(vrad1-vrad2))
                 
-                    
                 distances.append(distance)
             
             dist_mean = []
             dist_err = []
-            for i,j in zip (np.array(distances)[0,:],np.array(distances)[1,:]):
+            for i,j in zip (distances[0],distances[1]):
                 dist_mean.append(np.mean([i,j]))
                 dist_err.append( np.std([i,j])/np.sqrt(2))
+
                 
             for i in range(len(epoch_rv2s)):
                 epoch_rv2s[i] = epoch_rv2s[i] + dist_mean[i]
                 epoch_rv2_errs[i] = np.sqrt(epoch_rv2_errs[i]**2 + dist_err[i]**2)
+        
         #######################  End of exemption for KIC-123... ########################
 
         epoch_rv1s = np.array(epoch_rv1s)
@@ -378,7 +377,7 @@ def find_rv_time(ID,log_path,data_type, limits=[0,-1],plot_offset=True):
         
 
         #Printing rv_estimations to file:
-        rv_path = f'/home/lakeclean/Documents/speciale/rv_data/{data_type}_{ID}.txt'
+        rv_path = f'{master_path}/Speciale/data/rv_data/{data_type}_{ID}.txt'
         rv_names = ['jd','date','rv1','rv2','e_rv1','e_rv2','vbary',
                     'vsini1','vsini2','e_vsini1','e_vsini2','ampl1','ampl2', 'const', 'gwidth', 'limbd']
         
@@ -394,128 +393,127 @@ def find_rv_time(ID,log_path,data_type, limits=[0,-1],plot_offset=True):
         #print(rv_dat)
         if len(rv_dat[0])>0:
             df.to_csv(rv_path,index=False)
-
-        #The mean vsini over each epoch and the error:
-        '''
-        norm_vsini1_weights = epoch_vsini1_errs / sum(epoch_vsini1_errs)
-        norm_vsini2_weights = epoch_vsini2_errs / sum(epoch_vsini2_errs)
-        weighted_vsini1_mean = sum(norm_vsini1_weights*epoch_vsini1s)
-        weighted_vsini2_mean = sum(norm_vsini2_weights*epoch_vsini2s)
-        e_weighted_vsini1_mean = np.std(epoch_vsini1s)*np.sqrt(sum(norm_vsini1_weights**2))
-        e_weighted_vsini2_mean = np.std(epoch_vsini2s)*np.sqrt(sum(norm_vsini2_weights**2))
-        print(weighted_vsini1_mean,weighted_vsini2_mean,e_weighted_vsini1_mean,e_weighted_vsini2_mean)
-        mt.add_value(weighted_vsini1_mean,'vsini1',ID)
-        mt.add_value(weighted_vsini2_mean,'vsini2',ID)
-        mt.add_value(e_weighted_vsini1_mean,'e_vsini1',ID)
-        mt.add_value(e_weighted_vsini2_mean,'e_vsini2',ID)
-        '''
     
         
         
-#data_types = ['NOT', 'NOT_old_HIRES', 'NOT_old_LOWRES', 'TNG']#, 'KECK']
-#log_paths = ['/home/lakeclean/Documents/speciale/NOT_order_file_log.txt',
-#             '/home/lakeclean/Documents/speciale/NOT_old_HIRES_order_file_log.txt',
-#             '/home/lakeclean/Documents/speciale/NOT_old_LOWRES_order_file_log.txt',
-#             '/home/lakeclean/Documents/speciale/TNG_merged_file_log.txt']
-
+data_types = ['NOT', 'NOT_old_HIRES', 'NOT_old_LOWRES', 'TNG']#, 'KECK']
+log_paths = [f'{master_path}/Speciale/data/NOT_order_file_log.txt',
+             f'{master_path}/Speciale/data/NOT_old_HIRES_order_file_log.txt',
+             f'{master_path}/Speciale/data/NOT_old_LOWRES_order_file_log.txt',
+             f'{master_path}/Speciale/data/TNG_merged_file_log.txt']
+good_regions = [[30,50],[16,30],[18,33],[1,18]]
+#good_regions = [[1,18]]
 #data_types = ['NOT_old_LOWRES']
-#log_paths = ['/home/lakeclean/Documents/speciale/NOT_old_LOWRES_order_file_log.txt']
+#log_paths = [f'{master_path}/Speciale/data/NOT_old_LOWRES_order_file_log.txt']
 
-data_types = ['NOT']
-log_paths = ['/home/lakeclean/Documents/speciale/NOT_order_file_log.txt']
+#data_types = ['NOT_old_HIRES']
+#log_paths = [f'{master_path}/Speciale/data/NOT_old_HIRES_order_file_log.txt']
 
-for data_type, log_path in zip(data_types, log_paths):
-    '''
-    #KIC12317678
+#data_types = ['TNG']
+#log_paths = [f'{master_path}/Speciale/data/TNG_merged_file_log.txt']
+
+#data_types = ['NOT']
+#log_paths = [f'{master_path}/Speciale/data/NOT_order_file_log.txt']
+
+IDs = mt.get_table()['ID'].data
+
+
+
+for data_type, log_path, good_region in zip(data_types, log_paths, good_regions):
+
     if True:
-        find_rv_time('KIC12317678',
-                     log_path=log_path,
-                     data_type=data_type)
-
-    #KIC9693187
-    if True:
-        find_rv_time('KIC9693187',
-                     log_path=log_path,
-                     data_type=data_type)
-    
-
-    #KIC4914923
-    if True:
-        find_rv_time('KIC4914923',
+        for ID in IDs:
+            find_rv_time(ID,
                      log_path=log_path,
                      data_type=data_type,
-                     limits = [20,60])
+                     limits = good_region,
+                     plot_offset=False)
+    else:
+        #KIC12317678
+        if True:
+            find_rv_time('KIC12317678',
+                         log_path=log_path,
+                         data_type=data_type,
+                         limits = good_region)
+        #KIC9693187
+        if True:
+            find_rv_time('KIC9693187',
+                         log_path=log_path,
+                         data_type=data_type,
+                         limits = good_region)
+        #KIC4914923
+        if True:
+            find_rv_time('KIC4914923',
+                         log_path=log_path,
+                         data_type=data_type,
+                         limits = good_region)
+        #KIC9025370
+        if True:
+            find_rv_time('KIC9025370',
+                         log_path=log_path,
+                         data_type=data_type,
+                         limits = good_region)
+        #KIC10454113
+        if True:
+            find_rv_time('KIC10454113',
+                         log_path=log_path,
+                         data_type=data_type,
+                         limits = good_region)
+        #KIC4457331
+        if True:
+            find_rv_time('KIC4457331',
+                         log_path=log_path,
+                         data_type=data_type)
+        #EPIC246696804
+        if True:
+            find_rv_time('EPIC246696804',
+                         log_path=log_path,
+                         data_type=data_type)
+        #EPIC212617037
+        if True:
+            find_rv_time('EPIC212617037',
+                         log_path=log_path,
+                         data_type=data_type)
+        #EPIC-249570007
+        if True:
+            find_rv_time('EPIC249570007',
+                         log_path=log_path,
+                         data_type=data_type,
+                         limits = good_region)
 
+        #EPIC-230748783
+        if True:
+            find_rv_time('EPIC230748783',
+                         log_path=log_path,
+                         data_type=data_type,
+                         limits = good_region)
 
+        #EPIC236224056
+        if True:
+            find_rv_time('EPIC236224056',
+                         log_path=log_path,
+                         data_type=data_type,
+                         limits = good_region)
+        #KIC4260884
+        if True:
+            find_rv_time('KIC4260884',
+                         log_path=log_path,
+                         data_type=data_type,
+                         limits = good_region)
 
-    #KIC9025370
-    if True:
-        find_rv_time('KIC9025370',
-                     log_path=log_path,
-                     data_type=data_type)
-    
+        #KIC9652971
+        if True:
+            find_rv_time('KIC9652971',
+                         log_path=log_path,
+                         data_type=data_type,
+                         limits = good_region)
 
-
-    #KIC10454113
-    if True:
-        find_rv_time('KIC10454113',
-                     log_path=log_path,
-                     data_type=data_type)
-
-    
-    #KIC4457331
-    if True:
-        find_rv_time('KIC4457331',
-                     log_path=log_path,
-                     data_type=data_type)
-    '''
-
-    #EPIC246696804
-    if True:
-        find_rv_time('EPIC246696804',
-                     log_path=log_path,
-                     data_type=data_type)
-        
-    #EPIC212617037
-    if True:
-        find_rv_time('EPIC212617037',
-                     log_path=log_path,
-                     data_type=data_type)
-    #EPIC-249570007
-    if True:
-        find_rv_time('EPIC249570007',
-                     log_path=log_path,
-                     data_type=data_type)
-
-    #EPIC-230748783
-    if True:
-        find_rv_time('EPIC230748783',
-                     log_path=log_path,
-                     data_type=data_type)
-
-    #EPIC-236224056
-    if True:
-        find_rv_time('EPIC236224056',
-                     log_path=log_path,
-                     data_type=data_type)
-
-    #KIC4260884
-    if False:
-        find_rv_time('KIC4260884',
-                     log_path=log_path,
-                     data_type=data_type)
-
-    #KIC9652971
-    if False:
-        find_rv_time('KIC9652971',
-                     log_path=log_path,
-                     data_type=data_type)
-
-    #KIC4260884
-    if False:
-        find_rv_time('HD208139',
-                     log_path=log_path,
-                     data_type=data_type)
+        #KIC4260884
+        if True:
+            find_rv_time('HD208139',
+                         log_path=log_path,
+                         data_type=data_type,
+                         limits = good_region)
 
 
 

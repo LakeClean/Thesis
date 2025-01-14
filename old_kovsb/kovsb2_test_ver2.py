@@ -28,10 +28,10 @@ plt.close("all")
 ######################################################################################################################
 # MCMC options
 ######################################################################################################################
-nwalkers = 30 #64
+nwalkers = 32 #64
 iterations = 2000 #5000
 burnin = 750
-options = "SB1"
+#options = "SB1"
 options = "SB2"
 #options = "AST"
 #options = "COMBINED"
@@ -39,8 +39,8 @@ options = "SB2"
 ######################################################################################################################
 # Input files
 ######################################################################################################################
-rv_file_name = '/home/lakeclean/Documents/speciale/rv_data/test.npy' #"rv_sep_data.npy"
-rv_params_file_name = '/home/lakeclean/Documents/speciale/rv_data/test_params.npy' #""rv_params_chi_dra.npy""
+rv_file_name = 'test.npy' #'/home/lakeclean/Documents/speciale/rv_data/test.npy' #"rv_sep_data.npy"
+rv_params_file_name = 'test_params.npy'  #'/home/lakeclean/Documents/speciale/rv_data/test_params.npy' #""rv_params_chi_dra.npy""
 
 if options == "SB1":
     time_rv, rva, rva_err = np.load(rv_file_name, allow_pickle = True)
@@ -88,10 +88,10 @@ k_a_lim = [-100, 100]  # [-np.inf, np.inf]
 k_b_lim = [-100, 100]  # [-np.inf, np.inf]  
 a_lim = [0, np.inf]  # [0, np.inf]  
 e_lim = [0, 1] # [0, 1] 
-i_lim = [0, 90] # [0, 180]  
+i_lim = [0, 180] # [0, 180]  
 w_lim = [0, 360] # [0, 360] 
 W_lim = [0, 360] # [0, 360]
-p_lim = [1,100] # [-np.inf, np.inf]  
+p_lim = [1,200] # [-np.inf, np.inf]  
 v0_a_lim = [-100, 100] # [-np.inf, np.inf]  
 v0_b_lim = [-100, 100] # [-np.inf, np.inf] 
 
@@ -337,7 +337,7 @@ def log_prior_rv_sb2(params_rv: np.ndarray):
     
     if uni_prior_rv:
         gp = gauss_dis(gauss_priors, mu, sigma)
-        return gp
+        return 0 #gp
     else:
         return -np.inf
 
@@ -1071,6 +1071,7 @@ if options == "SB2":
     theta_params_rv, q_rv = get_params(flat_samples_rv)
     plot_rv_sb2(data_rv, theta_params_rv)
     fig = corner.corner(flat_samples_rv, labels = labels_rv)#, truths = params_rv)
+    plt.show()
     display_params(theta_params_rv, q_rv, labels_rv_)
     #np.save("flat_samples", flat_samples)
     #np.save("chi_dra_params", [labels_save, t_params[1], t_params[0], t_params[2]])

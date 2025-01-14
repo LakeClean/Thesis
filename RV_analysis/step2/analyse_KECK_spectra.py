@@ -10,22 +10,23 @@ from scipy.signal import find_peaks
 from astropy.time import Time
 import make_table_of_target_info as mt
 from PyAstronomy import pyasl #For converting from vacuum to air
-
+master_path = '/usr/users/au662080'
 
 
 #### importing templates ####
 
 #RGB from ardata
-template_dir = '/home/lakeclean/Documents/speciale/templates/ardata.fits'
+template_dir = f'{master_path}/Speciale/data/templates/ardata.fits'
 template_data = pyfits.getdata(f'{template_dir}')
 arcturus_tfl_RG = template_data['arcturus']
 arcturus_twl = template_data['wavelength']
 tfl_MS = template_data['solarflux']
 
 
-phoenix_templates = '/home/lakeclean/Documents/speciale/templates/phoenix/'
+phoenix_templates = f'{master_path}/Speciale/data/templates/phoenix/'
 phoenix_twl = pyfits.getdata(phoenix_templates + 'WAVE_PHOENIX-ACES-AGSS-COND-2011.fits')
 phoenix_tfl = pyfits.getdata(phoenix_templates + 'lte06100-4.50-0.0.PHOENIX-ACES-AGSS-COND-2011-HiRes.fits')
+#phoenix_tfl = pyfits.getdata(phoenix_templates + 'lte05800-4.50-0.0.PHOENIX-ACES-AGSS-COND-2011-HiRes.fits')
 #limiting to the range where conversion works
 idx = np.where( (phoenix_twl>3000) & (phoenix_twl <16900))[0]
 #phoenix_twl = pyasl.vactoair2(phoenix_twl[idx])
@@ -136,7 +137,7 @@ def analyse_spectrum(folder,target_name, template='MS',start_order=1, append_to_
     epoch_date = folder[-10:]  #date of fits creation
     print(epoch_name, epoch_date)
     #Path for the reduced data:
-    path = '/home/lakeclean/Documents/speciale/target_analysis/' + epoch_name +'/' + epoch_date
+    path = f'{master_path}/Speciale/data/target_analysis/' + epoch_name +'/' + epoch_date
         
     #######################################################################
     def save_datas(datas,labels,title):
@@ -181,7 +182,7 @@ def analyse_spectrum(folder,target_name, template='MS',start_order=1, append_to_
         Teff = int(np.round(float(mt.get_value('Teff',target_name)),-2))
         logg = correct_logg(float(mt.get_value('logg',target_name)))
         FeH = mt.get_value('Fe/H',target_name)
-        #templates_path = '/home/lakeclean/Documents/speciale/templates/phoenix/*'
+        #templates_path = f'{master_path}/Speciale/data/templates/phoenix/*'
         tfl = tfl_MS
         twl = arcturus_twl
     '''
@@ -510,13 +511,13 @@ def analyse_spectrum(folder,target_name, template='MS',start_order=1, append_to_
 
 
 
-#filename = '/home/lakeclean/Documents/speciale/initial_data/2024-04-02/FIHd020137_step011_merge.fits'
+#filename = f'{master_path}/Speciale/data/initial_data/2024-04-02/FIHd020137_step011_merge.fits'
 
 #analyse_spectrum(filename,use_SVD=False,show_bin_plots=False)
 
 #### importing all the spectra:
 '''
-lines = open('/home/lakeclean/Documents/speciale/NOT_order_file_log.txt').read().split('\n')
+lines = open(f'{master_path}/Speciale/data/NOT_order_file_log.txt').read().split('\n')
 files = []
 IDs = []
 dates = []
@@ -532,7 +533,7 @@ for line in lines[:-1]:
         dates.append(date)
 '''
 SB2IDs =['KIC9693187','KIC9025370','KIC9652971']
-IDlines = open('/home/lakeclean/Documents/speciale/spectra_log_h_readable.txt').read().split('&')
+IDlines = open(f'{master_path}/Speciale/data/spectra_log_h_readable.txt').read().split('&')
 SB2_IDs, SB2_dates, SB2_types, vguess1s, vguess2s = [], [], [], [], []
 for IDline in IDlines[:-1]:
     if IDline.split(',')[0][11:].strip(' ') in SB2IDs:
@@ -555,7 +556,7 @@ k=0
 time1 = time()
 
 
-folder_paths = glob.glob('/home/lakeclean/Documents/speciale/initial_data/KECK/KIC10454113/*')
+folder_paths = glob.glob(f'{master_path}/Speciale/data/initial_data/KECK/KIC10454113/*')
 folder_paths.sort()
 
 

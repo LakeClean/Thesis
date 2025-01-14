@@ -19,7 +19,7 @@ Idea: First shift one spectrum by the appropiate wavelength of the v_bary.
 '''
 
 #import template
-template_dir = '/home/lakeclean/Documents/speciale/templates/ardata.fits'
+template_dir = '~/Special/data/templates/ardata.fits'
 template_data = pyfits.getdata(f'{template_dir}')
 tfl_RG = template_data['arcturus']
 tfl_MS = template_data['solarflux']
@@ -37,11 +37,11 @@ dates = ['2024-05-26T22:58:27.122','2024-06-08T04:23:40.113',
 for date in dates:
     print(Time(date).jd - 2457000)
 
-path = '/home/lakeclean/Documents/speciale/initial_data'
+path = '~/Special/data/initial_data'
 
 
 
-path = f'/home/lakeclean/Documents/speciale/NOT_order_file_log.txt'
+path = f'~/Special/data/NOT_order_file_log.txt'
 lines= open(path).read().split('\n')
 all_IDs, all_vhelios,all_dates= [], [], []
 all_vbary = {}

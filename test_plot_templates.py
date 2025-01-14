@@ -25,7 +25,7 @@ def vac2air(wl_vac):
 
 #Old template from arcturus:
 fig,ax =plt.subplots()
-template_dir = '/home/lakeclean/Documents/speciale/templates/ardata.fits'
+template_dir = '~/Speciale/data/templates/ardata.fits'
 template_data = pyfits.getdata(f'{template_dir}')
 tfl_RG = template_data['arcturus']
 tfl_MS = template_data['solarflux']
@@ -34,13 +34,13 @@ twl = template_data['wavelength']
 
 #from goettingen
 
-path = '/home/lakeclean/Downloads/spvis.dat.gz'
+#path = '/home/lakeclean/Downloads/spvis.dat.gz'
 
-df = pd.read_csv(path,delim_whitespace=True)
+#df = pd.read_csv(path,delim_whitespace=True)
 
-print(df.keys())
+#print(df.keys())
 
-df = df.to_numpy()
+#df = df.to_numpy()
 
 
 #also from goettingen:
@@ -50,9 +50,9 @@ plt.plot(wl_corr(wave,0),sun,color='r')
 plt.plot(wl_corr(wave,0.15),sun,color='b')
 
 
-plt.plot(pyasl.vactoair2(10**(8)/df[:,0]),df[:,1],color='r',label='(Reiners, 2016)')
-plt.plot(vac2air(10**(8)/df[:,0]),df[:,1],color='pink',
-         label='(Reiners, 2016)')
+#plt.plot(pyasl.vactoair2(10**(8)/df[:,0]),df[:,1],color='r',label='(Reiners, 2016)')
+#plt.plot(vac2air(10**(8)/df[:,0]),df[:,1],color='pink',
+#         label='(Reiners, 2016)')
 
 #ax.plot(wl_corr(twl,0),tfl_MS,color='r')
 #ax.plot(wl_corr(twl,0.28),tfl_MS,color='b')
@@ -63,7 +63,7 @@ plt.close()
 
 # Looking at the KECK spectra to see if offset is similar to RV found.
 
-rv_path = '/home/lakeclean/Documents/speciale/rv_data/KECK_KIC10454113.txt'
+rv_path = '~/Speciale/data/rv_data/KECK_KIC10454113.txt'
 
 
 df = pd.read_csv(rv_path)
@@ -72,7 +72,7 @@ rvs = df['rv1'].to_numpy()
 vbarys = df['vbary'].to_numpy()
 
 
-path_folders = '/home/lakeclean/Documents/speciale/initial_data/KECK/KIC10454113'
+path_folders = '~/Speciale/data/initial_data/KECK/KIC10454113'
 folders = glob.glob(path_folders + '/*')
 
 def sorter(folder):
@@ -111,7 +111,7 @@ plt.ylim(-0.5,2)
 #new templates from Phoenix:
 #plt.close()
 
-phoenix_templates = '/home/lakeclean/Documents/speciale/templates/phoenix/'
+phoenix_templates = '~/Speciale/data/templates/phoenix/'
 wl = pyfits.getdata(phoenix_templates + 'WAVE_PHOENIX-ACES-AGSS-COND-2011.fits')
 fl = pyfits.getdata(phoenix_templates + 'lte04700-3.00-0.0.PHOENIX-ACES-AGSS-COND-2011-HiRes.fits')
 fl = pyfits.getdata(phoenix_templates + 'lte06100-4.50-0.0.PHOENIX-ACES-AGSS-COND-2011-HiRes.fits')
@@ -121,7 +121,7 @@ fl = pyfits.getdata(phoenix_templates + 'lte06100-4.50-0.0.PHOENIX-ACES-AGSS-CON
 idx = np.where( (wl>3000) & (wl <16900))[0]
 #wl = pyasl.vactoair2(wl[idx])
 wl = wl[idx]
-fl = fl[idx]
+fl = fl[idx]/np.amax(fl[idx])
 
 #fig,ax = plt.subplots()
 for i in range(100):
@@ -151,9 +151,9 @@ for i in tab['G_i'].data:
 
 #Showing that TNG red and blue is weird:
 '''
-blue_path = '/home/lakeclean/Documents/speciale/initial_data/TNG/2016-07-19/KIC104.blue.norm.fits'
-red_path = '/home/lakeclean/Documents/speciale/initial_data/TNG/2016-07-19/KIC104.red.norm.fits'
-regular_path = '/home/lakeclean/Documents/speciale/target_analysis/KIC10454113/2016-07-19T22:19:33.321/data/order_*_normalized.txt'
+blue_path = '~/Special/data/initial_data/TNG/2016-07-19/KIC104.blue.norm.fits'
+red_path = '~/Special/data/initial_data/TNG/2016-07-19/KIC104.red.norm.fits'
+regular_path = '~/Special/data/target_analysis/KIC10454113/2016-07-19T22:19:33.321/data/order_*_normalized.txt'
 
 
 red_data = pyfits.getdata(red_path)
@@ -181,9 +181,9 @@ plt.show()
 
 #Plotting KIC1045... from KECK to see if there is relative movement.
 '''
-rv_path = '/home/lakeclean/Documents/speciale/target_analysis/KIC10454113'
+rv_path = '~/Special/data/target_analysis/KIC10454113'
 
-file_path = '/home/lakeclean/Documents/speciale/KECK_ordered_file_log.txt'
+file_path = '~/Special/data/KECK_ordered_file_log.txt'
 
 df = pd.read_csv(file_path)
 dates = df['date'].to_numpy()
@@ -209,7 +209,7 @@ plt.show()
 '''
 vbary = -7406.861379294089/1000 -12
 
-order_files = glob.glob('/home/lakeclean/Documents/speciale/target_analysis/KIC10454113/2011-09-05T00:58:25.2/data/order_*_normalized.txt')
+order_files = glob.glob('~/Special/data/target_analysis/KIC10454113/2011-09-05T00:58:25.2/data/order_*_normalized.txt')
 for file in order_files:
     df = pd.read_csv(file,skiprows=1).to_numpy()
     plt.plot(wl_corr(df[:,0],vbary),df[:,1])
@@ -220,8 +220,8 @@ plt.show()
 
 '''
 
-rv_path = '/home/lakeclean/Documents/speciale/rv_data/*'
-spectra_path = '/home/lakeclean/Documents/speciale/target_analysis/'
+rv_path = '~/Special/data/rv_data/*'
+spectra_path = '~/Special/data/target_analysis/'
 stars = glob.glob(rv_path)
 
 
@@ -265,7 +265,7 @@ type_jd = []
 
 
 for log in logs:
-    df = pd.read_csv('/home/lakeclean/Documents/speciale/'+log)
+    df = pd.read_csv('~/Special/data/'+log)
     IDs = df['ID'].to_numpy()
     directorys = df['directory'].to_numpy()
     vbarys = df['v_bary'].to_numpy()
@@ -292,7 +292,7 @@ fig,ax = plt.subplots(figsize=(4,12))
 
 
 log = logs[-1]
-df = pd.read_csv('/home/lakeclean/Documents/speciale/'+log)
+df = pd.read_csv('~/Special/data/'+log)
 IDs = df['ID'].to_numpy()
 directorys = df['directory'].to_numpy()
 vbarys = df['v_bary'].to_numpy()
@@ -325,7 +325,7 @@ for directory, vbary, jd in zip(directorys[index],vbarys[index],jds[index]):
             
 
 log = logs[3]
-df = pd.read_csv('/home/lakeclean/Documents/speciale/'+log)
+df = pd.read_csv('~/Special/data/'+log)
 IDs = df['ID'].to_numpy()
 directorys = df['directory'].to_numpy()
 vbarys = df['v_bary'].to_numpy()
@@ -350,7 +350,7 @@ for directory, vbary, jd in zip(directorys[index],vbarys[index],jds[index]):
 
 
 log = logs[1]
-df = pd.read_csv('/home/lakeclean/Documents/speciale/'+log)
+df = pd.read_csv('~/Special/data/'+log)
 IDs = df['ID'].to_numpy()
 directorys = df['directory'].to_numpy()
 vbarys = df['v_bary'].to_numpy()
@@ -376,7 +376,7 @@ for directory, vbary, jd in zip(directorys[index],vbarys[index],jds[index]):
 
 
 log = logs[2]
-df = pd.read_csv('/home/lakeclean/Documents/speciale/'+log)
+df = pd.read_csv('~/Special/data/'+log)
 IDs = df['ID'].to_numpy()
 directorys = df['directory'].to_numpy()
 vbarys = df['v_bary'].to_numpy()
@@ -410,14 +410,14 @@ ax.set_title('Spectrum corrected for V_bary')
 ax.legend()
 plt.show()
 
-save_path='/home/lakeclean/Documents/speciale/random_plots/'
+save_path='~/Special/data/random_plots/'
 save_path += 'KIC10454113_spectrum_shows_rv_motion.pdf'
 fig.savefig(save_path,dpi='figure', format='pdf')
 '''
 
 
 #log for vbarys from date
-log_path = '/home/lakeclean/Documents/speciale/'
+log_path = '~/Special/data/'
 logs = ['NOT_old_HIRES_order_file_log.txt',
         'NOT_old_LOWRES_order_file_log.txt', 'NOT_order_file_log.txt',
         'TNG_merged_file_log.txt']
@@ -439,8 +439,8 @@ for log in logs:
 
 #Plotting the BF of KIC10454113 to show the SB2 nature
 '''
-path = '/home/lakeclean/Documents/speciale/target_analysis/KIC10454113/*'
-path = '/home/lakeclean/Documents/speciale/target_analysis/KIC4914923/*'
+path = '~/Special/data/target_analysis/KIC10454113/*'
+path = '~/Special/data/target_analysis/KIC4914923/*'
 folders = glob.glob(path)
 def sorter(folder):
     date = folder[len(path)-1:]
@@ -493,7 +493,7 @@ ax.set_ylim(-5,5)
 ax.set_xlabel('RV [km/s]')
 ax.set_ylabel('BF + offset')
 plt.show()        
-save_path='/home/lakeclean/Documents/speciale/random_plots/'
+save_path='~/Special/data/random_plots/'
 save_path += 'KIC10454113_old_NOT_SB2_BFs.pdf'
 fig.savefig(save_path,dpi='figure', format='pdf')
 '''
@@ -502,7 +502,7 @@ fig.savefig(save_path,dpi='figure', format='pdf')
 
 #Fitting extreme point for KIC1045
 '''
-path = '/home/lakeclean/Documents/speciale/target_analysis/KIC10454113/'
+path = '~/Special/data/target_analysis/KIC10454113/'
 date = '2011-09-05T00:58:25.2'
 #date = '2016-04-27T03:51:43.5'
 path += date
@@ -536,14 +536,14 @@ ax.set_ylabel('Summed BF')
 ax.plot(rvs, summed_bf/(len(files)),color='black')   
 plt.show()
 
-#save_path='/home/lakeclean/Documents/speciale/random_plots/KIC4914923_sum_BF_HIGH_EXPOSURE.pdf'
+#save_path='~/Special/data/random_plots/KIC4914923_sum_BF_HIGH_EXPOSURE.pdf'
 #fig.savefig(save_path,dpi='figure', format='pdf')
 '''
 
 
 #Checking the high exposure obs of KIC49 (BF)
 '''
-path = '/home/lakeclean/Documents/speciale/target_analysis/KIC4914923/'
+path = '~/Special/data/target_analysis/KIC4914923/'
 date = '2016-04-27T03:53:16.9'
 #date = '2016-04-27T03:51:43.5'
 path += date
@@ -568,14 +568,14 @@ ax.set_ylabel('Summed BF')
 ax.plot(df[:,0]+vbarys[date], summed_bf/(50-6),color='black')   
 plt.show()
 
-save_path='/home/lakeclean/Documents/speciale/random_plots/KIC4914923_sum_BF_HIGH_EXPOSURE.pdf'
+save_path='~/Special/data/random_plots/KIC4914923_sum_BF_HIGH_EXPOSURE.pdf'
 fig.savefig(save_path,dpi='figure', format='pdf')
 '''
 
 
 #Checking the high exposure obs of KIC49 (spectre)
 '''
-path = '/home/lakeclean/Documents/speciale/target_analysis/KIC4914923/'
+path = '~/Special/data/target_analysis/KIC4914923/'
 date = '2016-04-27T03:53:16.9'
 #date = '2016-04-27T03:51:43.5'
 path += date
@@ -599,7 +599,7 @@ ax.set_ylabel('norm flux')
 
 
 
-save_path='/home/lakeclean/Documents/speciale/random_plots/'
+save_path='~/Special/data/speciale/random_plots/'
 save_path += 'KIC4914923_HIGH_EXPOSURE_spectrum.pdf'
 fig.savefig(save_path,dpi='figure', format='pdf')
 plt.show()
@@ -608,7 +608,7 @@ plt.show()
 
 #Plotting the odd spectrum of KIC4914923
 '''
-path = '/home/lakeclean/Documents/speciale/target_analysis/KIC4914923/'
+path = '~/Special/data/target_analysis/KIC4914923/'
 date = '2013-08-06T23:33:46.4'
 
 path += date
@@ -632,7 +632,7 @@ ax.set_ylabel('norm flux')
 
 
 
-#save_path='/home/lakeclean/Documents/speciale/random_plots/'
+#save_path='~/Special/data/random_plots/'
 #save_path += 'KIC4914923_HIGH_EXPOSURE_spectrum.pdf'
 #fig.savefig(save_path,dpi='figure', format='pdf')
 plt.show()

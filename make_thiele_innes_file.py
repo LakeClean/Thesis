@@ -4,7 +4,7 @@ import pandas as pd
 
 import glob
 
-path = '/home/lakeclean/Documents/speciale/NOT/Target_names_and_info.txt'
+path = '~/Speciale/data/NOT/Target_names_and_info.txt'
 
 f = open(path).read().split('\n')[36:50]
 
@@ -21,7 +21,7 @@ for line in f:
 
 
 #f.close()
-path = '/home/lakeclean/Documents/speciale/thiele_innes_elements.txt'
+path = '~/Speciale/data/thiele_innes_elements.txt'
 f = open(path,'w')
 f.write('Target ID, Gaia DR3 ID, A, B ,F, G, e_ATI, e_BTI, e_FTI, e_GTI\n')
 for i,j,k in zip(has_T_innes,target_IDs,G_IDs):

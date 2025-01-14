@@ -4,11 +4,14 @@ import glob
 import barycorrpy as bc
 from astropy.time import Time
 import make_table_of_target_info as mt
+master_path = '/usr/users/au662080'
+
+
 
 '''
-directory = '/home/lakeclean/Documents/speciale/initial_data'
+directory = f'{master_path}/Speciale/data/initial_data'
 folders = glob.glob(f'{directory}/*')
-f = open('/home/lakeclean/Documents/speciale/merged_file_log.txt','w')
+f = open(f'{master_path}/Speciale/data/merged_file_log.txt','w')
 f.write("ID, SEQID, directory, date, T_exp, v_helio, fiber,\
                         npixels, CDELT1, CRVAL1, TELESCOP \n")
 info = []
@@ -54,14 +57,14 @@ all_ras = tab['RA'].data # right ascension of all stars
 all_decs = tab['DEC'].data #declination of all stars
 
 
-pm_dir = '/home/lakeclean/Documents/speciale/propermotion_parallax.txt'
+pm_dir = f'{master_path}/Speciale/data/propermotion_parallax.txt'
 pm_lines = open(pm_dir).read().split('\n')
 
 
-directory = '/home/lakeclean/Documents/speciale/initial_data/NOT'
+directory = f'{master_path}/Speciale/data/initial_data/NOT'
 folders = glob.glob(f'{directory}/*')
 
-f = open('/home/lakeclean/Documents/speciale/NOT_order_file_log.txt','w')
+f = open(f'{master_path}/Speciale/data/NOT_order_file_log.txt','w')
 head = "ID, directory, date,T_exp,v_helio,fiber,npixels"
 head = head + ",ra,dec,lat,longi,alt,epoch,pmra,pmdec,px"
 head = head + ",epoch_jd,v_bary,TELESCOP"
@@ -174,17 +177,16 @@ all_ras = tab['RA'].data # right ascension of all stars
 all_decs = tab['DEC'].data #declination of all stars
 
 
-pm_dir = '/home/lakeclean/Documents/speciale/propermotion_parallax.txt'
+pm_dir = f'{master_path}/Speciale/data/propermotion_parallax.txt'
 pm_lines = open(pm_dir).read().split('\n')
 
-
-directory = '/home/lakeclean/Documents/speciale/initial_data/NOT'
+directory = f'{master_path}/Speciale/data/initial_data/NOT'
 folders = glob.glob(f'{directory}/*')
 
 
-f_new = open('/home/lakeclean/Documents/speciale/NOT_order_file_log.txt','w')
-f_old_LOWRES = open('/home/lakeclean/Documents/speciale/NOT_old_LOWRES_order_file_log.txt','w')
-f_old_HIRES = open('/home/lakeclean/Documents/speciale/NOT_old_HIRES_order_file_log.txt','w')
+f_new = open(f'{master_path}/Speciale/data/NOT_order_file_log.txt','w')
+f_old_LOWRES = open(f'{master_path}/Speciale/data/NOT_old_LOWRES_order_file_log.txt','w')
+f_old_HIRES = open(f'{master_path}/Speciale/data/NOT_old_HIRES_order_file_log.txt','w')
 head = "ID,directory,date,T_exp,v_helio,fiber,npixels"
 head = head + ",ra,dec,lat,longi,alt,pmra,pmdec,px"
 head = head + ",epoch_jd,v_bary,TELESCOP"

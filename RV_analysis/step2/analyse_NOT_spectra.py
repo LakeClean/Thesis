@@ -9,15 +9,18 @@ from time import time
 from scipy.signal import find_peaks
 from astropy.time import Time
 import make_table_of_target_info as mt
+from PyAstronomy import pyasl #For converting from vacuum to air
+
+master_path = '/usr/users/au662080'
 
 #import template
-'''
-template_dir = '/home/lakeclean/Documents/speciale/templates/ardata.fits'
+
+template_dir = f'{master_path}/Speciale/data/templates/ardata.fits'
 template_data = pyfits.getdata(f'{template_dir}')
 tfl_RG = template_data['arcturus']
 tfl_MS = template_data['solarflux']
-twl = template_data['wavelength']
-'''
+twl_arcturus = template_data['wavelength']
+
 
 
 
@@ -27,7 +30,7 @@ twl = template_data['wavelength']
 
 #import the RGB info
 '''
-lines = open('/home/lakeclean/Documents/speciale/NOT/Target_names_and_info.txt').read().split('\n')[1:14]
+lines = open(f'{master_path}/Speciale/data/NOT/Target_names_and_info.txt').read().split('\n')[1:14]
 all_target_names = [] # Just a list of the names
 RGBs = [] # names of known RGB stars
 for line in lines:
@@ -46,6 +49,17 @@ all_decs = tab['DEC'].data #declination of all stars
 all_Teffs = tab['Teff'].data #Effective temperature as given by mikkel
 all_loggs = tab['logg'].data #surface gravity as given by Mikkel
 all_FeHs = tab['Fe/H'].data #metallicity as given by Mikkel
+
+def correct_logg(x):
+    test = x%0.5
+    if test >=0.25:
+        return np.round(x + 0.5 - test,1)
+    else:
+        return np.round(x -test,1)
+
+
+
+
 
 def analyse_spectrum(file, template='MS',start_order=1, append_to_log=False,
                      
@@ -122,78 +136,70 @@ def analyse_spectrum(file, template='MS',start_order=1, append_to_log=False,
     ra = header['RA']
     dec = header['DEC']
 
+
     #Finding out the name of target based on RA and DEC:
     coord_dist = np.sqrt( (all_ras- ra)**2 + (all_decs-dec)**2)
     epoch_name = all_target_names[np.where(coord_dist == min(coord_dist))[0]][0]
 
-
-    #### Importing template ####
-
-    #Finding the right template:
-    phoenix_templates = glob.glob('~/Speciale/data/templates/phoenix')
-    dists = np.empty(len(phoenix_templates))
-    for template in phoenix_templates:
-        template = template.split('-')
-        template_Teff = int(template[0][4:])
-        template_logg = float(template[1])
-        template_FeH = float(template[2][3])
-
-        
-        
-        
-        
-    
-    phoenix_templates = '/home/lakeclean/Documents/speciale/templates/phoenix/'
-    phoenix_twl = pyfits.getdata(phoenix_templates + 'WAVE_PHOENIX-ACES-AGSS-COND-2011.fits')
-    phoenix_tfl = pyfits.getdata(phoenix_templates + 'lte06100-4.50-0.0.PHOENIX-ACES-AGSS-COND-2011-HiRes.fits')
-    #limiting to the range where conversion works
-    idx = np.where( (phoenix_twl>3000) & (phoenix_twl <16900))[0]
-    #phoenix_twl = pyasl.vactoair2(phoenix_twl[idx])
-    phoenix_twl = phoenix_twl[idx]
-    phoenix_tfl = phoenix_tfl[idx]
-
-    norm_phoenix_tfl = np.empty_like(phoenix_tfl)
-    #normalizinf template in bits of 100 Å
-    for i in range(100):
-        i = i*100
-        tmp_idx = np.where(( (phoenix_twl[0] + i)<phoenix_twl)& ( (phoenix_twl[0] + i +100 )>phoenix_twl)  )[0]
-        nwl, nfl = shazam.normalize(phoenix_twl[tmp_idx],phoenix_tfl[tmp_idx],gauss=False)
-        norm_phoenix_tfl[tmp_idx] = nfl
-    
     epoch_date = header['DATE-OBS'].strip(' ')   #date of fits creation
     epoch_Vhelio = header['VHELIO'] # heliocentric velocity
     print(epoch_name,header['TCSTGT'].strip(' '), epoch_date)
+
+    path = f'{master_path}/Speciale/data/target_analysis/{epoch_name}/{epoch_date}'
     
+    #### Importing template ####
+
+
     if epoch_name in RGBs:
         tfl = tfl_RG
-    else:
+        twl = twl_arcturus
+    elif epoch_name == 'HD208139':
         tfl = tfl_MS
+        twl = twl_arcturus
+    else:
 
-    path = f'/home/lakeclean/Documents/speciale/target_analysis/{epoch_name}/{epoch_date}'
+        #Selcting the appropiate template:
+        Teff = int(np.round(float(mt.get_value('Teff',ID)),-2))
+        logg = correct_logg(float(mt.get_value('logg',ID)))
+        FeH = abs(correct_logg(float(mt.get_value('Fe/H',ID)))) #BEWARE FeH is set to abs
 
-    #######################################################################
+        #Finding the right template:
+        phoenix_templates = glob.glob('/usr/users/au662080/Speciale/data/templates/phoenix/*HiRes.fits')
+        phoenix_template = ''
+        for template in phoenix_templates:
+            template = template.split('-')
+            template_Teff = int(template[0][-4:])
+            template_logg = float(template[1])
+            template_FeH = float(template[2][:3])
 
-    if append_to_log:
-        f = open('analyse_log.txt').read()
-        f += f'{start_order}, {append_to_log}, {normalize_bl}, {normalize_poly}, {normalize_gauss},'
-        f += f'{normalize_lower}, {normalize_upper}, {crm_iters}, {crm_q}, {resample_dv}, {resample_edge},'
-        f += f' {getCCF_rvr}, {getCCF_ccf_mode}, {getBF_rvr}, {getBF_dv},'
-        f += f'{rotbf2_fit_fitsize},{rotbf2_fit_res},{rotbf2_fit_smooth},'
-        f += f'{rotbf2_fit_vsini1},{rotbf2_fit_vsini2},{rotbf2_fit_vrad1},'
-        f += f'{rotbf2_fit_vrad2},{rotbf2_fit_ampl1},{rotbf2_fit_ampl2},'
-        f += f'{rotbf2_fit_print_report},{rotbf2_fit_smoothing},'
-        f += f'{rotbf_fit_fitsize},{rotbf_fit_res},{rotbf_fit_smooth},'
-        f += f'{rotbf_fit_vsini},{rotbf_fit_print_report},'
-        f += f'{use_SVD},{SB_type},{show_plots}, {save_plots}, {save_data},'
-        f += f'{show_bin_plots},{save_bin_info}'
-        lines = f
-        f.close()
-        f.open('analyse_log.txt','w')
-        f.write(lines)
-        f.close()
+            
+            if (template_Teff == Teff) and (template_logg == logg) and (template_FeH == FeH):
+                
+                phoenix_template = ('-').join(template)
+                print(phoenix_template)
+                break
+        phoenix_twl = pyfits.getdata(f'{master_path}/Speciale/data/templates/phoenix/WAVE_PHOENIX-ACES-AGSS-COND-2011.fits')
+        phoenix_tfl = pyfits.getdata(phoenix_template)
+        #limiting to the range where conversion works
+        idx = np.where( (phoenix_twl>3000) & (phoenix_twl <16900))[0]
+        phoenix_twl = pyasl.vactoair2(phoenix_twl[idx])
+        #phoenix_twl = phoenix_twl[idx]
+        phoenix_tfl = phoenix_tfl[idx]
+
+        #phoenix_tfl = phoenix_tfl/np.amax(phoenix_tfl)
+
+        norm_phoenix_tfl = np.empty_like(phoenix_tfl)
         
+        for i in range(100): #normalizinf template in bits of 100 Å
+            i = i*100
+            tmp_idx = np.where(( (phoenix_twl[0] + i)<phoenix_twl)& ( (phoenix_twl[0] + i +100 )>phoenix_twl)  )[0]
+            nwl, nfl = shazam.normalize(phoenix_twl[tmp_idx],phoenix_tfl[tmp_idx],gauss=False)
+            norm_phoenix_tfl[tmp_idx] = nfl
 
-    
+            
+        tfl = norm_phoenix_tfl
+        twl = phoenix_twl
+
 
     #######################################################################
     def save_datas(datas,labels,title):
@@ -517,9 +523,9 @@ def analyse_spectrum(file, template='MS',start_order=1, append_to_log=False,
 
 #### importing all the spectra:
 
-#lines = open('/home/lakeclean/Documents/speciale/NOT_old_LOWRES_order_file_log.txt').read().split('\n')
-#lines = open('/home/lakeclean/Documents/speciale/NOT_old_HIRES_order_file_log.txt').read().split('\n')
-lines = open('/home/lakeclean/Documents/speciale/NOT_order_file_log.txt').read().split('\n')
+lines = open(f'{master_path}/Speciale/data/NOT_old_LOWRES_order_file_log.txt').read().split('\n')
+#lines = open(f'{master_path}/Speciale/data/NOT_old_HIRES_order_file_log.txt').read().split('\n')
+#lines = open('/usr/users/au662080/Speciale/data/NOT_order_file_log.txt').read().split('\n')
 files = []
 IDs = []
 dates = []
@@ -535,7 +541,7 @@ for line in lines[1:-1]:
     dates.append(date)
 
 SB2IDs =['KIC9693187','KIC9025370','KIC9652971']
-IDlines = open('/home/lakeclean/Documents/speciale/spectra_log_h_readable.txt').read().split('&')
+IDlines = open('/usr/users/au662080/Speciale/data/spectra_log_h_readable.txt').read().split('&')
 SB2_IDs, SB2_dates, SB2_types, vguess1s, vguess2s = [], [], [], [], []
 for IDline in IDlines[:-1]:
     if IDline.split(',')[0][11:].strip(' ') in SB2IDs:
@@ -564,7 +570,7 @@ for file,ID,date in zip(files[0:],IDs[0:],dates[0:]):
     #                 show_bin_plots=False,show_plots=False)
     #if ID == 'KIC9025370':
         #if date == '2013-08-06T23:33:46.4':
-        if (Time(date).jd > 2460643.5):# and (Time(date).jd > 2457294):
+        #if (Time(date).jd > 2460643.5):# and (Time(date).jd > 2457294):
             print(f'Spectrum: {k}/{len(files)}, Time: {time()-time1}s')
             time1 = time()
             k+=1
@@ -573,8 +579,9 @@ for file,ID,date in zip(files[0:],IDs[0:],dates[0:]):
             save_data=True
             save_plots=False
             show_plots=False
+            
             rotbf_fit_print_report=False
-            resolution = 67000 #Notice different instruments have different resolution
+            resolution = 25000 #Notice different instruments have different resolution
             
             if ID not in SB2IDs:
                     analyse_spectrum(file,SB_type = 1, start_order=start_order,
