@@ -90,6 +90,7 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
         TNG_dates = df['date'].to_numpy()
         TNG_vbary = df['vbary'].to_numpy()
 
+        '''
         epoch_rv1s = np.append(epoch_rv1s,TNG_rv1s,axis=0)
         epoch_rv2s = np.append(epoch_rv2s,TNG_rv2s,axis=0)
         epoch_rv1_errs = np.append(epoch_rv1_errs,TNG_rv1_errs,axis=0)
@@ -97,6 +98,7 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
         epoch_jds = np.append(epoch_jds,TNG_jds,axis=0)
         epoch_dates = np.append(epoch_dates,TNG_dates,axis=0)
         epoch_vbary = np.append(epoch_vbary,TNG_vbary,axis=0)
+        '''
         
     except:
         pass
@@ -235,18 +237,20 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
 
 
         #Random stuff:
-        if False:
+        if True:
             ax[0].errorbar(V_litt_time, V_litt, e_V_litt,
                        fmt='o',capsize=2,color='red',label='SIMBAD: GAIA/APOGEE')
-            ax[0].scatter(-1190.4594305553474,-32.545914715462075,
+            t2, rv2 = -1190.4594305553474,-32.545914715462075
+            ax[0].scatter(t2,rv2,
                           label='2.dary component', color='black')
 
             
-            extra_times = ['2010-07-08 02:35:07','2010-09-01 23:15:06','2011-07-12 22:03:22',
-                               '2011-07-19 03:54:56','2011-08-10 03:09:20','2013-06-15 01:29:45',
-                               '2013-09-09 22:08:58']
-            for extra_time in extra_times:
-                ax[0].vlines(Time(extra_time).jd-2457000,-40,20,ls='--',color='black')
+            #extra_times = ['2010-07-08 02:35:07','2010-09-01 23:15:06','2011-07-12 22:03:22',
+            #                   '2011-07-19 03:54:56','2011-08-10 03:09:20','2013-06-15 01:29:45',
+            #                   '2013-09-09 22:08:58']
+            #for extra_time in extra_times:
+            #    ax[0].vlines(Time(extra_time).jd-2457000,-40,20,ls='--',color='black')
+                
             
 
     else:
@@ -287,10 +291,7 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
         except:
             pass
 
-        #ax[0].errorbar(V_litt_time, V_litt, e_V_litt,
-        #           fmt='o',capsize=2,color='red',label='SIMBAD: GAIA/APOGEE')
-        #ax[0].scatter(-1190.4594305553474,-32.545914715462075,
-        #              label='2.dary component', color='black')
+
 
 
         
@@ -342,6 +343,17 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
         ax[0].plot(proxy_time,fit_rvs,label='fit')
         ax[0].plot([min(epoch_jds),max(epoch_jds)],[v0,v0],
                    ls='--',color='black',alpha=0.4,label=f'v0={np.round(v0,2)}km/s')
+
+        #For KIC10454113:
+        tmax = proxy_time[np.where(max(fit_rvs) == fit_rvs)[0]]
+        t2, rv2 = -1190.4594305553474,-32.545914715462075
+        print('here:', np.radians(w+180)%(2*np.pi), (np.radians(w+180) + 2*np.pi/p * (t2-tmax))%(2*np.pi) )
+        k2 = (rv2- v0) * (e*np.cos(np.radians(w + 180)) -1 ))**(-1)
+        print(k2)
+        
+        fit_rv2 = sb.radial_velocity(proxy_time,k=k2,e=e,w=(180+w),p=p,t0=t0,v0=v0)
+        ax[0].plot(proxy_time,fit_rv2,label='fit 2.dary component')
+
         ax[0].legend()
 
 
@@ -411,7 +423,7 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
         fit_rv1s = sb.radial_velocity(proxy_time,k=k1,e=e,w=w,p=p,t0=t0,v0=v01)
         ax[0].plot(proxy_time,fit_rv1s,label='fit')
 
-        fit_rv2s = sb.radial_velocity(proxy_time,k=-k2,e=e,w=w,p=p,t0=t0,v0=v02)
+        fit_rv2s = sb.radial_velocity(proxy_time,k=k2,e=e,w=(w-180),p=p,t0=t0,v0=v02)
         ax[0].plot(proxy_time,fit_rv2s,label='fit')
         
         ax[0].plot([min(epoch_jds),max(epoch_jds)],[v01,v01],
@@ -652,7 +664,7 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
 
 
             #Random stuff:
-            if True:
+            if False:
                 extra_times = ['2010-07-08 02:35:07','2010-09-01 23:15:06','2011-07-12 22:03:22',
                                '2011-07-19 03:54:56','2011-08-10 03:09:20','2013-06-15 01:29:45',
                                '2013-09-09 22:08:58']
@@ -808,7 +820,7 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
         #smoothed = smoothed**(1/nr_order_in_mean) #Geometric mean
         smoothed = smoothed/nr_order_in_mean #Artihmetic mean
 
-        dates = np.array(dates) % p # It only makes sense to plot phase
+        dates = np.array(dates) # It only makes sense to plot phase
 
         fig,ax = plt.subplots()
         levels = np.linspace(scale_river[0],scale_river[1],scale_river[2])
@@ -861,17 +873,15 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
         if show_plot: plt.show()
         plt.close()
 
-#KIC9693187
+
+#KIC10454113
 if True:
-    plot_rv_time('KIC9693187',fit_params=[29,26,0.9,50,104,-9],limits=[20,60],SB_type=2,
+    plot_rv_time('KIC10454113',fit_params=[16,0.7,350,6000,-20],SB_type=1,
                  orbital_period=100, show_plot=True,save_plot=True, report_fit=True,
-                 make_phase_plot=True,make_river_plot=True, scale_river=[-0.0005,0.08,100],
-                 make_table=True,print_mass = True,exclude_points=10,
-                 res1=3)
-
-
+                 make_phase_plot=True,make_river_plot=False, scale_river=[-0.0005,0.08,100],
+                 make_table=True,exclude_points=0)
        
-
+'''
 #KIC12317678
 if True:
     plot_rv_time('KIC12317678',fit_params=[18,26,0.3,100,82,-41],limits=[20,60],SB_type=2,
@@ -907,7 +917,7 @@ if True:
                  make_table=True,print_mass=True,exclude_points=12,
                  res1=4,res_off1=-0.04,res2=4,res_off2=0.03)
 
-
+'''
 #KIC10454113
 if True:
     plot_rv_time('KIC10454113',fit_params=[16,0.8,100,6000,-20],SB_type=1,
@@ -915,7 +925,7 @@ if True:
                  make_phase_plot=True,make_river_plot=False, scale_river=[-0.0005,0.08,100],
                  make_table=True,exclude_points=0)
 
-
+'''
 #KIC4457331
 if True:
     plot_rv_time('KIC4457331',fit_params=[],limits=[20,60],SB_type=1,
@@ -926,7 +936,7 @@ if True:
 
 
 
-#EPIC-246696804
+#EPIC246696804
 if True:
     plot_rv_time('EPIC246696804',fit_params=[],limits=[20,60],SB_type=1,
                  orbital_period=100, show_plot=True,save_plot=True, report_fit=True,
@@ -934,14 +944,14 @@ if True:
                  make_table=True,
                  find_rv=True)
     
-#EPIC-212617037
+#EPIC212617037
 if True:
     plot_rv_time('EPIC212617037',fit_params=[],limits=[20,60],SB_type=1,
                  orbital_period=100, show_plot=True,save_plot=True, report_fit=True,
                  make_phase_plot=False,make_river_plot=True, scale_river=[-0.0005,0.08,100],
                  make_table=True,
                  find_rv=True)
-#EPIC-249570007
+#EPIC249570007
 if True:
     plot_rv_time('EPIC249570007',fit_params=[],limits=[20,60],SB_type=1,
                  orbital_period=100, show_plot=True,save_plot=True, report_fit=True,
@@ -949,7 +959,7 @@ if True:
                  make_table=True,
                  find_rv=True)
 
-#EPIC-230748783
+#EPIC230748783
 if True:
     plot_rv_time('EPIC230748783',fit_params=[],limits=[20,60],SB_type=1,
                  orbital_period=100, show_plot=True,save_plot=True, report_fit=True,
@@ -958,7 +968,7 @@ if True:
                  find_rv=True)
 
 
-#EPIC-236224056
+#EPIC236224056
 if True:
     plot_rv_time('EPIC236224056',fit_params=[],limits=[20,60],SB_type=1,
                  orbital_period=100, show_plot=True,save_plot=True, report_fit=True,
@@ -982,14 +992,14 @@ if True:
                  make_table=True,
                  find_rv=True)
 
-#KIC4260884
+#HD208139
 if True:
     plot_rv_time('HD208139',fit_params=[],limits=[20,60],SB_type=1,
                  orbital_period=100, show_plot=True,save_plot=True, report_fit=True,
                  make_phase_plot=False,make_river_plot=True, scale_river=[-0.0005,0.14,100],
                  make_table=True,
                  find_rv=True)
-
+'''
 
 
 #Really good guesses:

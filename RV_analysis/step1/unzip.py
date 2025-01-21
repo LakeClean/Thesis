@@ -5,6 +5,7 @@ import astropy.io.fits as pyfits
 import tarfile
 import shutil
 
+master_path = '/usr/users/au662080'
 
 '''
 Script for unzipping the files from NOT and taking the ordered files and
@@ -15,9 +16,11 @@ Probably....
 
 #NOT:
 
-path = '~/Special/data/old/'
+path = f'{master_path}/Speciale/data/old/'
 
 zipedfiles = glob.glob(f'{path}reduced*')
+
+
 
 print('Unzipping the folowwing files:')
 for i in zipedfiles:
@@ -42,7 +45,7 @@ for zipedfile in zipedfiles:
 
 files = glob.glob(temporary_dir + '/*')
 
-final_dir = '~/Special/data/initial_data/NOT/'
+final_dir = f'{master_path}/Speciale/data/initial_data/NOT/'
 
 
 

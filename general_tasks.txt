@@ -1,0 +1,8 @@
+General tasks:
+
+    - Implement MCMC into fitting
+    - Compare the parameters estimated.
+    - Implement corrections to scaling relations
+    - Do modelling with PARAM program (finding age and such)
+    - Read up on articles
+    - Write project

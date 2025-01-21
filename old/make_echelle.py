@@ -12,6 +12,8 @@ import seismology_functions as sf
 from matplotlib.widgets import Button, Slider
 from scipy.signal import fftconvolve
 from scipy.signal import find_peaks
+from peak_bagging_tool import simple_peak_bagging
+from scipy.ndimage import gaussian_filter
 
 
 
@@ -25,7 +27,7 @@ This is simply done by computing the PDS with the use of the powerspectrum
 class in from the ps module:
 '''
 
-def smooth(f,p,sigma=1.5):
+def smooth(f,p,sigma=2):
     gauss = np.zeros(len(f))
     gauss[:] = np.exp(-0.5*np.power(f/sigma,2))
     total = np.sum(gauss)
@@ -50,8 +52,8 @@ numax1s = [50.41,25.35,76.48] #guess at numax for component 1
 numax2s = [120,40,110] #guess at numax for component 2
 #guess_dnus = [1,2.2,0.4] #guesses at dnu
 for time_file,numax1,numax2 in zip(timeseries_files[0:],numax1s[0:],numax2s[0:]):
-    
-    
+    break
+
     lines = open(time_file).read().split('\n')
     ID = lines[3]
     print('Analysing ',ID, '|  numax1 guess:', numax1,'|  numax2 guess:', numax2)
@@ -358,20 +360,24 @@ for power_file,numax in zip(power_files[0:],numaxs[0:]):
     dnu_peak2 = sf.find_maximum(dnu_guess,lagvec2,acf2/acf2[1],dnu_guess*0.9,dnu_guess*1.1)[0]
     print(f'dnu from unweighted PSD: {dnu_peak1}')
     print(f'dnu from weighted PSD: {dnu_peak2}')
+
+
+    smoothed = gaussian_filter(p[idx1], sigma=6)
+    peaks = find_peaks(smoothed,prominence=1,distance=dnu_peak1)[0]
+    print(peaks,len(peaks))
     
 
     #plotting
-    if True:
+    if False:
         fig,ax = plt.subplots(2,2)
         ax[0,0].set_title(ID)
 
-        peaks = find_peaks(p[idx1],
-                           distance=dnu_peak1,
-                           prominence=10)[0]
-        ax[0,0].scatter(f[idx1][peaks],p[idx1][peaks],color='r')
-        print(peaks)
+        
+        
+        
         ax[0,0].plot(f[idx2], p[idx2])
         ax[0,0].plot(f[idx1], p[idx1])
+        ax[0,0].plot(f[idx1],smoothed)
         ax[0,0].set_xlabel(r'frequency [$\mu$Hz]')
         ax[0,0].set_ylabel(r'power [$ppm^2 / \mu$Hz]')
 
@@ -405,6 +411,10 @@ for power_file,numax in zip(power_files[0:],numaxs[0:]):
         fig.tight_layout()
         plt.show()
 
+    
+    points, gauss_points, mode_points = simple_peak_bagging(f[idx1],smoothed,region=20)
+
+    print(points, gauss_points, mode_points)
 
     
 
@@ -430,6 +440,17 @@ for power_file,numax in zip(power_files[0:],numaxs[0:]):
                   extent=[0,dnu_peak1,start,stop],
                   norm=LogNorm(vmin=1.1,vmax=VMAX), interpolation='Gaussian',
                   cmap=cm.gray_r,zorder=0)
+
+        colors = ['green', 'red', 'yellow']
+
+        scatter_tag1 = ax.scatter(mode_points[0]%dnu_peak1,
+                                        mode_points[0], color=colors[0])
+        scatter_tag2 = ax.scatter(mode_points[1]%dnu_peak1,
+                                        mode_points[1], color=colors[1])
+        scatter_tag3 = ax.scatter(mode_points[2]%dnu_peak1,
+                                        mode_points[2], color=colors[2])
+
+                                    
         ax.set_xlabel(f' Frequency mod dnu={np.round(dnu_peak1,2)}muHz')
         ax.set_ylabel('Frequency muHz')
         ax.set_title(ID)
@@ -447,6 +468,11 @@ for power_file,numax in zip(power_files[0:],numaxs[0:]):
             A,B,new_EchelleVals=sf.Echellediagram(p_filt,f,val,start,
                                       stop,no_repeat=1)
             image.set_data(new_EchelleVals)
+
+            scatter_tag1.set_offsets(np.column_stack((mode_points[0]%val,mode_points[0])))
+            scatter_tag2.set_offsets(np.column_stack((mode_points[1]%val,mode_points[1])))
+            scatter_tag3.set_offsets(np.column_stack((mode_points[2]%val,mode_points[2])))
+            
             fig.canvas.draw_idle()
             
         slider.on_changed(update)
@@ -473,11 +499,15 @@ for power_file,numax in zip(power_files[0:],numaxs[0:]):
     eps_axis = (eps_axis[idx_sort]-1)*dnu_peak1
     collapsed_normed = collapsed_normed[idx_sort]
 
-    smoothed_collapsed = smooth(eps_axis,collapsed_normed,sigma=0.1)
+    
+    
+    smoothed_collapsed = gaussian_filter(collapsed_normed, sigma=5)
+    
     if True:
         fig, ax = plt.subplots()
         ax.plot(eps_axis,collapsed_normed)
         ax.plot(eps_axis,smoothed_collapsed)
+        
         ax.set_xlabel('Frequency')
         plt.show()
 

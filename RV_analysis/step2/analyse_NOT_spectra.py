@@ -523,9 +523,9 @@ def analyse_spectrum(file, template='MS',start_order=1, append_to_log=False,
 
 #### importing all the spectra:
 
-lines = open(f'{master_path}/Speciale/data/NOT_old_LOWRES_order_file_log.txt').read().split('\n')
+#lines = open(f'{master_path}/Speciale/data/NOT_old_LOWRES_order_file_log.txt').read().split('\n')
 #lines = open(f'{master_path}/Speciale/data/NOT_old_HIRES_order_file_log.txt').read().split('\n')
-#lines = open('/usr/users/au662080/Speciale/data/NOT_order_file_log.txt').read().split('\n')
+lines = open('/usr/users/au662080/Speciale/data/NOT_order_file_log.txt').read().split('\n')
 files = []
 IDs = []
 dates = []
@@ -570,7 +570,7 @@ for file,ID,date in zip(files[0:],IDs[0:],dates[0:]):
     #                 show_bin_plots=False,show_plots=False)
     #if ID == 'KIC9025370':
         #if date == '2013-08-06T23:33:46.4':
-        #if (Time(date).jd > 2460643.5):# and (Time(date).jd > 2457294):
+        if (Time(date).jd > Time('2024-11-20').jd):# and (Time(date).jd > 2457294):
             print(f'Spectrum: {k}/{len(files)}, Time: {time()-time1}s')
             time1 = time()
             k+=1
@@ -578,10 +578,10 @@ for file,ID,date in zip(files[0:],IDs[0:],dates[0:]):
             show_bin_plots=False
             save_data=True
             save_plots=False
-            show_plots=False
+            show_plots=True
             
             rotbf_fit_print_report=False
-            resolution = 25000 #Notice different instruments have different resolution
+            resolution = 67000 #Notice different instruments have different resolution
             
             if ID not in SB2IDs:
                     analyse_spectrum(file,SB_type = 1, start_order=start_order,

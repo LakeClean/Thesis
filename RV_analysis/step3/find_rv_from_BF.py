@@ -423,11 +423,12 @@ for data_type, log_path, good_region in zip(data_types, log_paths, good_regions)
 
     if True:
         for ID in IDs:
-            find_rv_time(ID,
+            if ID[:4] == 'EPIC':
+                find_rv_time(ID,
                      log_path=log_path,
                      data_type=data_type,
                      limits = good_region,
-                     plot_offset=False)
+                     plot_offset=True)
     else:
         #KIC12317678
         if True:
@@ -474,14 +475,14 @@ for data_type, log_path, good_region in zip(data_types, log_paths, good_regions)
             find_rv_time('EPIC212617037',
                          log_path=log_path,
                          data_type=data_type)
-        #EPIC-249570007
+        #EPIC249570007
         if True:
             find_rv_time('EPIC249570007',
                          log_path=log_path,
                          data_type=data_type,
                          limits = good_region)
 
-        #EPIC-230748783
+        #EPIC230748783
         if True:
             find_rv_time('EPIC230748783',
                          log_path=log_path,

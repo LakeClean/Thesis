@@ -6,8 +6,10 @@ files = []
 IDs = []
 dates = []
 
+master_path = '/usr/users/au662080'
+
 #New NOT
-lines = open('~/Special/data/NOT_order_file_log.txt').read().split('\n')
+lines = open(f'{master_path}/Speciale/data/NOT_order_file_log.txt').read().split('\n')
 for line in lines[:-1]:
     line = line.split(',')
     file = line[1].strip()
@@ -20,7 +22,7 @@ for line in lines[:-1]:
         names.append(ID)
 
 #old NOT HIRES
-lines = open('~/Special/data/NOT_old_HIRES_order_file_log.txt').read().split('\n')
+lines = open(f'{master_path}/Speciale/data/NOT_old_HIRES_order_file_log.txt').read().split('\n')
 for line in lines[:-1]:
     line = line.split(',')
     file = line[1].strip()
@@ -33,7 +35,7 @@ for line in lines[:-1]:
         names.append(ID)
 
 #old NOT LOWRES
-lines = open('~/Special/data/NOT_old_LOWRES_order_file_log.txt').read().split('\n')
+lines = open(f'{master_path}/Speciale/data/NOT_old_LOWRES_order_file_log.txt').read().split('\n')
 for line in lines[:-1]:
     line = line.split(',')
     file = line[1].strip()
@@ -46,7 +48,7 @@ for line in lines[:-1]:
         names.append(ID)
 
 #TNG
-lines = open('~/Special/data/TNG_merged_file_log.txt').read().split('\n')
+lines = open(f'{master_path}/Speciale/data/TNG_merged_file_log.txt').read().split('\n')
 for line in lines[:-1]:
     line = line.split(',')
     file = line[1].strip()
@@ -60,7 +62,7 @@ for line in lines[:-1]:
 
 
 #KECK
-lines = open('~/Special/data/KECK_order_file_log.txt').read().split('\n')
+lines = open(f'{master_path}/Speciale/data/KECK_order_file_log.txt').read().split('\n')
 for line in lines[:-1]:
     line = line.split(',')
     file = line[1].strip()
@@ -74,7 +76,7 @@ for line in lines[:-1]:
 
 
 #ESpaDOns
-lines = open('~/Special/data/ESpaDOns_merged_file_log.txt').read().split('\n')
+lines = open(f'{master_path}/Speciale/data/ESpaDOns_merged_file_log.txt').read().split('\n')
 for line in lines[:-1]:
     line = line.split(',')
     file = line[1].strip()
@@ -91,7 +93,7 @@ for line in lines[:-1]:
 run=False #WARNING DONT RUN THIS CODE! IT WILL REMOVE NOTES!
 '''
 SB2IDs =['KIC-9693187','KIC-9025370','KIC9652971']
-IDlines = open('~/Special/data/spectra_log_h_readable.txt').read().split('&')
+IDlines = open(f'{master_path}/Speciale/data/spectra_log_h_readable.txt').read().split('&')
 SB2_IDs, SB2_dates, SB2_types, vguess1s, vguess2s = [], [], [], [], []
 for IDline in IDlines[:-1]:
     if IDline.split(',')[0][11:].strip(' ') in SB2IDs:
@@ -106,7 +108,7 @@ for IDline in IDlines[:-1]:
             vguess2s.append(line[2].split('/')[1].strip(' '))
 
 if run:
-    f  =open('~/Special/data/spectra_log_h_readable2.txt','w')
+    f  =open(f'{master_path}/Speciale/data/spectra_log_h_readable2.txt','w')
     for name in names:
         
         nr = 0
@@ -127,7 +129,7 @@ if run:
 '''
 
 
-targets  =open('~/Special/data/spectra_log_h_readable.txt').read().split('&')
+targets  =open(f'{master_path}/Speciale/data/spectra_log_h_readable.txt').read().split('&')
 
 print('The following new spectra have been observed:')
 new_lines = ''
@@ -162,7 +164,7 @@ for target in targets[:-1]: #not including the last & since nothing after
 
     
 
-f  =open('~/Special/data/spectra_log_h_readable.txt','w')
+f  =open(f'{master_path}/Speciale/data/spectra_log_h_readable.txt','w')
 f.write(new_lines)
 f.close()
 
