@@ -1,0 +1,2 @@
+parallax        A_Thiele_Innes       B_Thiele_Innes     F_Thiele_Innes           G_Thiele_Innes             eccentricity            period             t_periastron
+11.758106       0.477909            -1.059164           1.182146                -0.046137                   0.270741               239.124751           79.065581

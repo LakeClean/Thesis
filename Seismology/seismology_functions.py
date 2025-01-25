@@ -2,12 +2,21 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from ps import powerspectrum
-from bottleneck import nanmedian, nanmean, nanmax, nanmin
+#from bottleneck import nanmedian, nanmean, nanmax, nanmin
 from scipy.interpolate import InterpolatedUnivariateSpline as INT
 from scipy import optimize as OP
-from matplotlib.colors import LogNorm
-from matplotlib import cm
+#from matplotlib.colors import LogNorm
+#from matplotlib import cm
 import glob
+from ophobningslov import *
+from scipy.optimize import minimize
+import lmfit
+from scipy.ndimage import gaussian_filter
+import emcee
+import os
+from multiprocessing import Pool
+
+os.environ["OMP_NUM_THREADS"] = "1" #recommended setting for parallelizing emcee
 
 #############
 #   All or most functions are developed by Mikkel and are from the
@@ -244,14 +253,21 @@ def OAPS(f, p ,start, stop, dnus, K=4):
 #########################################################################
 
 
-def scaling_relations(numax,dnu,Teff):
+def scaling_relations(numax, e_numax,dnu,e_dnu,Teff):
     #Chaplin et al. 2014:
     numax_sun = 3090 #muHz
     dnu_sun = 135.1 #muHz
+    Teff_sun = 5780 #K
     #Values in solar masses:
-    M = (numax / numax_sun)**3 * (dnu_dnu_sun)**(-4) * (Teff/Teff_sun)**(3/2)
-    R = (numax / numax_sun) * (dnu_dnu_sun)**(-2) * (Teff/Teff_sun)**(1/2)
-    return M, R
+    varsAndVals = {'numax':[numax,e_numax],'dnu':[dnu,e_dnu]}
+    M = (numax / numax_sun)**3 * (dnu/dnu_sun)**(-4) * (Teff/Teff_sun)**(3/2)
+    R = (numax / numax_sun) * (dnu/dnu_sun)**(-2) * (Teff/Teff_sun)**(1/2)
+    unc_M = f'(numax / {numax_sun})**3 * (dnu/{dnu_sun})**(-4) * ({Teff}/{Teff_sun})**(3/2)'
+    unc_R = f'(numax / {numax_sun}) * (dnu/{dnu_sun})**(-2) * ({Teff/Teff_sun})**(1/2)'
+    e_M = ophobning(unc_M,varsAndVals,False)
+    e_R = ophobning(unc_R,varsAndVals,False)
+    return M, R, e_M, e_R
+
 
 def dnu_from_numax(numax):
     if numax < 300: #muHz
@@ -259,7 +275,161 @@ def dnu_from_numax(numax):
     else:
         alpha, beta = 0.25, 0.779
     return alpha * (numax)**beta
+
+
+
+#importing fitting parameters
+master_path = '/usr/users/au662080'
+ID = 'KIC10454113'
+mode_params = [[],[],[]]
+guess_points = [[],[],[]]
+ind_peaks_path = f'{master_path}/Speciale/data/Seismology/analysis/{ID}/'
+
+for k in range(3):
+    mode_path = ind_peaks_path+f'individual_peaks_mode{k+1}.txt'
+    ind_peaks_mode_df = pd.read_csv(mode_path).to_numpy()
+    mode_params[k].append(ind_peaks_mode_df)
+
+    eye_path = ind_peaks_path+f'individual_peaks_eye{k+1}.txt'
+    ind_peaks_eye_df = pd.read_csv(eye_path).to_numpy()
+    guess_points[k].append(ind_peaks_eye_df)
         
+
+
+#importing frequency and power
+power_path = f'{master_path}/Speciale/data/Seismology/analysis/{ID}/'
+power_path += 'power_spec.txt'
+
+power_df = pd.read_csv(power_path)
+freq = power_df['Frequency'].to_numpy()
+power = power_df['power'].to_numpy()
+
+
+for i in range(len(mode_params[0][0])):
+    fig, ax = plt.subplots()
+    
+    #isolating the part of the spectrum we want to fit
+
+    x_idx = (( guess_points[0][0][i][0] - 20 < freq ) &
+             ( guess_points[0][0][i][0] + 20 > freq ) )
+    f = freq[x_idx]
+    p = power[x_idx]
+    guess = guess_points[0][0][i][0]
+
+    a,b,c,d,e = mode_params[0][0][i]
+
+
+
+    #fitting with least squares
+
+    def mode(x,eps,H,gam,nu,const):
+        return eps*H / (1 + 4/gam**2 * (x - nu)**2) + const
+
+    def mode_res(params,x,y):
+        eps = params['eps'].value
+        H = params['H'].value
+        gam = params['gam'].value
+        nu = params['nu'].value
+        const = params['const'].value
+        res = y - mode(x,eps,H,gam,nu,const)
+        return res
+
+    params = lmfit.Parameters()
+    params.add('eps',value=1)
+    params.add('H', value=3)
+    params.add('gam',value=10)
+    params.add('nu',d)
+    params.add('const',value=0)
+
+    fit = lmfit.minimize(mode_res, params, args=(f,p),
+                         xtol=1.e-8,ftol=1.e-8,max_nfev=500)
+    
+    print(lmfit.fit_report(fit,show_correl=False))
+
+    eps = fit.params['eps'].value
+    H = fit.params['H'].value
+    gam = fit.params['gam'].value
+    nu = fit.params['nu'].value
+    const = fit.params['const'].value
+
+    ax.plot(f,mode(f,eps,H,gam,nu,const),label='least squares fit', color='red')
+
+
+    #Minimizing:
+
+    def mode(x,theta):
+        epsH,gam,nu,const = theta
+        return epsH / (1 + 4/gam**2 * (x - nu)**2) + const
+
+    def log_likelihood(theta,xs,ys):
+        out = 0
+        for x,y in zip(xs,ys):
+            out -= np.log(mode(x,theta)) + y/mode(x,theta)
+        return out
+
+    nll = lambda *args: -log_likelihood(*args)
+    initial = np.array([2, 2, guess,1])
+
+    soln = minimize(nll, initial, args=(f,p),
+                    bounds=[(0.000001,10),(0.000001,10),(0.000001,10000),(0.000001,20)])
+    print(soln.x)
+    print(soln)
+
+
+
+    #Smothing to illustrate 
+    smoothed = gaussian_filter(p, sigma=6)
+
+
+
+    #plotting
+    
+    ax.plot(f,p,label='power spectrum',zorder=1)
+    
+    ax.plot(f, mode(f,soln.x),label='maximized likelihood')
+    ax.plot(f,smoothed,label='smoothed')
+
+    ax.legend()
+
+    ax.tick_params(axis='x', labelrotation=45)
+    
+    plt.show()
+
+
+    #trying emcee:
+
+    def log_prior(theta):
+        epsH,gam,nu,const = theta
+        if 0 < epsH < 1000 and 0 < gam < 1000 and 0 < nu < 10000 and 0<const<1000:
+            return 0.0
+        return -np.inf
+
+    def log_probability(theta,x,y):
+        lp = log_prior(theta)
+        if not np.isfinite(lp):
+            return -np.inf
+        return lp + log_likelihood(theta, x,y)
+
+    pos = soln.x + 1e-4*np.random.randn(32,4)
+    nwalkers, ndim = pos.shape
+
+    sampler = emcee.EnsembleSampler(nwalkers,ndim,log_probability,args=(f,p))
+    sampler.run_mcmc(pos,5000,progress=True)
+
+    fig, ax = plt.subplots(4, figsize=(10, 7), sharex=True)
+    samples = sampler.get_chain()
+    labels = ["epsH", "gam", "nu", "const"]
+    for i in range(ndim):
+        ax[i].plot(samples[:, :, i], "k", alpha=0.3)
+        ax[i].set_xlim(0, len(samples))
+        ax[i].set_ylabel(labels[i])
+        ax[i].yaxis.set_label_coords(-0.1, 0.5)
+
+    ax[-1].set_xlabel("step number")
+
+    plt.show()
+
+    
 
 
 

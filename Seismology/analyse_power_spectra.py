@@ -12,9 +12,10 @@ import seismology_functions as sf
 from matplotlib.widgets import Button, Slider
 from scipy.signal import fftconvolve
 from scipy.signal import find_peaks
-from peak_bagging_tool import simple_peak_bagging
+from peak_bagging_tool import simple_peak_bagging, mode
 from scipy.ndimage import gaussian_filter
 import lmfit
+from scipy.integrate import quad
 
 
 
@@ -243,11 +244,26 @@ def analyse_power(ID,saving_data = True, plotting = True,
         plt.show()
 
 
+    region = [20,5,5]
     if find_ind_peaks:
         guess_points, gauss_params, mode_params = simple_peak_bagging(f[idx1],
                                                                 p[idx1])
 
+        amplitudes = [[],[],[]]
+        frequency_peaks = [[],[],[]] #set,row,column
+        widths = [[],[],[]]
         for k in range(3):
+            for i, peak in mode_params[k]:
+                eps, H, gam, nu, const = peak
+                integral,e_intergal = quad(mode,point[0] - region[k], point[0] + region[k],
+                                args=(eps,H,gam,nu,const) ) #mode is from peak_bagging_tool.py
+                amplitudes[k].append(integral)
+                frequency_peaks[k].append(nu)
+                widths[k].append(gam)
+
+
+
+            
             if saving_data: save_data(ID, f'individual_peaks_mode{k+1}',
                                   [[x[0] for x in mode_params[k]],
                                    [x[1] for x in mode_params[k]],
@@ -255,12 +271,6 @@ def analyse_power(ID,saving_data = True, plotting = True,
                                    [x[3] for x in mode_params[k]],
                                    [x[4] for x in mode_params[k]]],
                                   ['eps','H','gam','nu','const'])
-            
-            if saving_data: save_data(ID, f'individual_peaks_gauss{k+1}',
-                                  [[x[0] for x in gauss_params[k]],
-                                   [x[1] for x in gauss_params[k]],
-                                   [x[2] for x in gauss_params[k]]],
-                                  ['std','mu','floor'])
 
 
             if saving_data: save_data(ID, f'individual_peaks_eye{k+1}',
@@ -272,105 +282,105 @@ def analyse_power(ID,saving_data = True, plotting = True,
     
     else:
         mode_params = [[],[],[]]
-        gauss_params = [[],[],[]]
+        amplitudes = [[],[],[]]
+        frequency_peaks = [[],[],[]] #set,row,column
+        widths = [[],[],[]]
         guess_points = [[],[],[]]
-        ind_peaks_path = f'{master_path}/Speciale/data/Seismology/analysis/{ID}/'
         
+        ind_peaks_path = f'{master_path}/Speciale/data/Seismology/analysis/{ID}/'
+
         for k in range(3):
             mode_path = ind_peaks_path+f'individual_peaks_mode{k+1}.txt'
             ind_peaks_mode_df = pd.read_csv(mode_path).to_numpy()
             mode_params[k].append(ind_peaks_mode_df)
 
-            gauss_path = ind_peaks_path+f'individual_peaks_gauss{k+1}.txt'
-            ind_peaks_gauss_df = pd.read_csv(gauss_path).to_numpy()
-            gauss_params[k].append(ind_peaks_gauss_df)
-
             eye_path = ind_peaks_path+f'individual_peaks_eye{k+1}.txt'
             ind_peaks_eye_df = pd.read_csv(eye_path).to_numpy()
             guess_points[k].append(ind_peaks_eye_df)
+
+            for i,point in enumerate(ind_peaks_eye_df):
+                eps,H,gam,nu,const = ind_peaks_mode_df[i]
+                
+                integral,e_intergal = quad(mode,point[0] - region[k], point[0] + region[k],
+                                args=(eps,H,gam,nu,const) ) #mode is from peak_bagging_tool.py
+                amplitudes[k].append(integral)
+                frequency_peaks[k].append(nu)
+                widths[k].append(gam)
+                
+                
+
+                
             
  
+    
 
 
-            
-        
+
+
+
+
+
     
     #Finding numax:
     alt_dnus = [] #an alternative dnu estimate
     e_alt_dnus = [] # error in alternative dnu estimate
-    mus = [] #positions of gaussian for modes
-    stds = [] #'error' of gaussian for modes
-    lxnus = [] # list of list of positions of individual modes
+    numax_est = [] #positions of gaussian for modes
+    e_numax_est = [] #'error' of gaussian for modes
+    
     fig, ax = plt.subplots()
     for k in range(len(mode_params)):
+        if len(amplitudes[k]) <4:
+            continue
 
-        if find_ind_peaks:
-            if len(np.array(mode_params[k])[:,3]) < 4: #if too few points then continue
-                break
-            
-            epss = np.array(mode_params[k])[:,0]
-            Hs = np.array(mode_params[k])[:,1]
-            gams = np.array(mode_params[k])[:,2]
-            nus = np.array(mode_params[k])[:,3]
-            consts = np.array(mode_params[k])[:,4]
-        else:
-            if len(mode_params[k][0][:,3]) <4:
-                break
-            epss = mode_params[k][0][:,0]
-            Hs = mode_params[k][0][:,1]
-            gams = mode_params[k][0][:,2]
-            nus = mode_params[k][0][:,3]
-            consts = mode_params[k][0][:,4]
-            
-        lxnus.append(nus)
+        #sorting peaks:
+        amplitude = [x for y, x in sorted(zip(frequency_peaks[k],amplitudes[k]))]
+        frequency_peak = [y for y in sorted(frequency_peaks[k])]
+        width = [y for y, x in sorted(zip(frequency_peaks[k],widths[k]))]
 
-
-        nus_copy = nus
-        nus_copy.sort()
-        nu_diffs = np.diff(nus_copy)
-        alt_dnu = np.mean(nu_diffs)
-        e_alt_dnu = np.std(nu_diffs)/np.sqrt(len(nu_diffs))
+        #finding alternative dnu
+        peak_diffs = np.diff(frequency_peak)
+        alt_dnu = np.mean(peak_diffs)
+        e_alt_dnu = np.std(peak_diffs)/np.sqrt(len(peak_diffs))
         print('alternative dnu:',alt_dnu,'muHz+/-', e_alt_dnu)
 
-        amplitude = [x for y, x in sorted(zip(nus,Hs*epss))]
-        frequency = [y for y, x in sorted(zip(nus,Hs*epss))]
-
-
+        
         #Fitting Gaussian
         params = lmfit.Parameters()
         params.add('a',value=max(amplitude))
         params.add('b', value=numax_guess)
-        params.add('c', value=np.std(frequency))
+        params.add('c', value=np.std(frequency_peak))
         params.add('floor',value=0)
 
         fit = lmfit.minimize(Gaussian_res, params,
-                             args=(frequency,amplitude),
+                             args=(frequency_peak,amplitude),
                              xtol=1.e-8,ftol=1.e-8,max_nfev=500)
         print(lmfit.fit_report(fit,show_correl=False))
         a = fit.params['a'].value
         b = fit.params['b'].value
         c = fit.params['c'].value
         floor = fit.params['floor'].value
-        stds.append(c)
-        mus.append(b)
+        e_numax_est.append(c)
+        numax_est.append(b)
 
         
 
-        freq_space = np.linspace(min(frequency),max(frequency),100)
+        freq_space = np.linspace(min(frequency_peak),max(frequency_peak),100)
         norm = max(Gaussian(freq_space,a,b,c,floor))
         
-        ax.plot(freq_space,Gaussian(freq_space,a,b,c,floor)/norm,ls='--',
+        ax.plot(freq_space,Gaussian(freq_space,a,b,c,floor),ls='--',
                                   zorder=3)
 
-        ax.scatter(frequency,amplitude/norm)
+        ax.scatter(frequency_peak,amplitude)
+        
         ax.set_title(f'{ID}')
         ax.set_xlabel('Center freuqency')
-        ax.set_ylabel('Height * mode visibility (normed)')
+        ax.set_ylabel('Amplitude [area under peak]')
     plt.show()
 
     if saving_data: save_data(ID, 'numax',
-                                  [mus,stds],
+                                  [numax_est,e_numax_est],
                                   ['numax','numax_error'])
+    
     if saving_data: save_data(ID, 'alt_dnu', [alt_dnus,e_alt_dnus],
                                   ['alt_dnu', 'e_alt_dnu'])
 
@@ -390,8 +400,11 @@ def analyse_power(ID,saving_data = True, plotting = True,
         fig.subplots_adjust(bottom=0.25)
         colors = ['green', 'red', 'yellow']
 
-        for i,mu in enumerate(mus):
-            ax.plot([0,dnu_peak1],[mu,mu],ls='--',alpha=0.4,color=colors[i])
+        for i,n_est in enumerate(numax_est):
+            ax.plot([0,dnu_peak1],
+                    [n_est,n_est],
+                    ls='--',alpha=0.4,color=colors[i])
+            
         image = ax.imshow(EchelleVals,aspect='auto',
                   extent=[0,dnu_peak1,start,stop],
                   norm=LogNorm(vmin=1.1,vmax=VMAX), interpolation='Gaussian',
@@ -400,9 +413,9 @@ def analyse_power(ID,saving_data = True, plotting = True,
        
 
         scatter_tags = []
-        for i in range(len(lxnus)):
-            scatter_tag = ax.scatter(lxnus[i]%dnu_peak1,
-                                        lxnus[i], color=colors[i])
+        for k in range(len(frequency_peaks)):
+            scatter_tag = ax.scatter(frequency_peaks[k]%dnu_peak1,
+                                        frequency_peaks[k], color=colors[k])
             scatter_tags.append(scatter_tag)
 
 
@@ -427,7 +440,8 @@ def analyse_power(ID,saving_data = True, plotting = True,
             image.set_data(new_EchelleVals)
 
             for i in range(len(scatter_tags)):
-                scatter_tags[i].set_offsets(np.column_stack((lxnus[i]%val,lxnus[i])))
+                scatter_tags[i].set_offsets(np.column_stack((frequency_peaks[i]%val,
+                                                             frequency_peaks[i])))
                 scatter_tags[i].set_facecolor(colors[i])
             
             fig.canvas.draw_idle()
@@ -532,36 +546,36 @@ def analyse_power(ID,saving_data = True, plotting = True,
 
 
 if True:
-    analyse_power('KIC10454113',saving_data = False, plotting = True,
-                  filtering = True,find_ind_peaks = True) 
-
-if False:  
+    analyse_power('KIC10454113',saving_data = True, plotting = True,
+                  filtering = True,find_ind_peaks = False) 
+'''
+if True:  
     analyse_power('KIC9025370',saving_data = True, plotting = False,
                   filtering = True,find_ind_peaks = False)
 if True: 
     analyse_power('KIC12317678',saving_data = True, plotting = False,
                   filtering = True,find_ind_peaks = False)
-if False: 
+if True: 
     analyse_power('KIC4914923',saving_data = True, plotting = False,
                   filtering = True,find_ind_peaks = False)
-
 '''
+
 if True:
     analyse_power('EPIC236224056',saving_data = True, plotting = False,
-                  filtering = True,find_ind_peaks = True)
+                  filtering = True,find_ind_peaks = False)
 if True:
     analyse_power('EPIC246696804',saving_data = True, plotting = False,
-                  filtering = True,find_ind_peaks = True)
+                  filtering = True,find_ind_peaks = False)
 if True:
     analyse_power('EPIC249570007',saving_data = True, plotting = False,
-                  filtering = True,find_ind_peaks = True)
+                  filtering = True,find_ind_peaks = False)
 if True:
     analyse_power('EPIC230748783',saving_data = True, plotting = False,
-                  filtering = True,find_ind_peaks = True)
+                  filtering = True,find_ind_peaks = False)
 if True:
     analyse_power('EPIC212617037',saving_data = True, plotting = False,
-                  filtering = True,find_ind_peaks = True)
-'''
+                  filtering = True,find_ind_peaks = False)
+
 
 
 
