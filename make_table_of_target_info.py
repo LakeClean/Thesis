@@ -3,8 +3,8 @@ from astropy.table import *
 import numpy as np
 from astropy.table import Table
 
-
-table_path = '~/Speciale/data/table_of_info.dat'
+master_path = '/usr/users/au662080'
+table_path = f'{master_path}/Speciale/data/table_of_info.dat'
 
 
 
@@ -46,7 +46,7 @@ def new_column(key,col_type='object',index=-1,desc=''):
     dat.add_column(values,name=key,index=index)
     dat.write(table_path,format='ascii',overwrite=True)
     
-    desc_path = '/home/lakeclean/Documents/speciale/table_of_info_description.txt'
+    desc_path = f'{master_path}/Speciale/data/table_of_info_description.txt'
     lines = open(desc_path).read()
     f = open(desc_path,'w')
     f.write(lines)

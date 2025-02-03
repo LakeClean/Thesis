@@ -2,9 +2,17 @@ import make_table_of_target_info as mt
 import matplotlib.pyplot as plt
 import numpy as np
 from ophobningslov import *
+from get_vizier_parameters import find_parameter
+import pandas as pd
+from nsstools import NssSource
+
+
 tab = mt.get_table()
+IDs = tab['ID'].data
 
 
+
+################################# Functions: ###############################################
 def scaling_relations(numax, e_numax,dnu,e_dnu,Teff):
     #Chaplin et al. 2014:
     numax_sun = 3090 #muHz
@@ -28,9 +36,32 @@ def dnu_from_numax(numax):
         alpha, beta = 0.25, 0.779
     return alpha * (numax)**beta
 
-fig, ax = plt.subplots()
-#RV data
-IDs = tab['ID'].data
+
+#############################################################################################
+
+
+idx_123 = np.where(IDs == 'KIC12317678')[0]
+idx_90 = np.where(IDs == 'KIC9025370')[0]
+
+idxs = []
+
+labelsAndlocations = {'KIC9025370':0, 'KIC12317678':1,
+                      'KIC9693187':2,'KIC4914923':3}
+#labelsAndlocations = {}
+#for i, ID in enumerate(IDs):
+#    labelsAndlocations[ID] = i
+
+################################### Importing data: ###################################
+
+
+
+#### My Parameters: ####
+
+#my_parameter_names = ['numax','dnu','Per','Tperi','ecc']
+#my_parameters = np.zeros(shape=(len(my_parameter_names), len(labelsAndlocations)) )
+
+
+###importing RV-data
 rv_M1s = tab['M1'].data
 e_rv_M1s = tab['e_M1'].data
 rv_M2s = tab['M2'].data
@@ -40,45 +71,176 @@ M1_litt = tab['M1_seis_litt']
 e_M1_litt = tab['e_M1_seis_litt']
 
 
-idx_123 = np.where(IDs == 'KIC12317678')[0]
-idx_90 = np.where(IDs == 'KIC9025370')[0]
+###Seisdata:
 
-
-
-#Seisdata
-dnu_123 = np.mean( [63.149, 63.289])
-e_dnu_123 =  np.sqrt(0.35**2 + 0.380**2)
-numax_123 = 1230
-e_numax_123 =  100
-
+#KIC9025370
 dnu_90 = np.mean([132.835,133.234,133.31])
 e_dnu_90 = np.sqrt(0.190032**2 + 0.424**2 + 0.156**2)
 numax_90 = np.mean([3042.71407,2940.04548])
 e_numax_90 = np.sqrt(92.3771852**2 + 249.493167**2)
+mt.add_value(numax_90,'numax','KIC9025370')
+mt.add_value(e_numax_90,'e_numax','KIC9025370')
+mt.add_value(dnu_90,'dnu','KIC9025370')
+mt.add_value(e_dnu_90,'e_dnu','KIC9025370')
+
+#KIC12317678
+dnu_123 = np.mean( [63.149, 63.289])
+e_dnu_123 =  np.sqrt(0.35**2 + 0.380**2)
+numax_123 = 1230
+e_numax_123 =  100
+mt.add_value(numax_123,'numax','KIC12317678')
+mt.add_value(e_numax_123,'e_numax','KIC12317678')
+mt.add_value(dnu_123,'dnu','KIC12317678')
+mt.add_value(e_dnu_123,'e_dnu','KIC12317678')
+
+#KIC9693187
+
+#KIC4914923
+
+#KIC10454113
 
 
-M_90, R_90, e_M_90, e_R_90 = scaling_relations(numax_90,e_numax_90,
-                                   dnu_90 ,e_dnu_90,Teff[idx_90][0])
-M_123, R_123, e_M_123, e_R_123 = scaling_relations(numax_123,e_numax_123,
-                                   dnu_123 ,e_dnu_123,Teff[idx_123][0])
+#### Gaia data with NStools ####
+nss = pd.read_csv("Jonatan.csv")
+source_index = 0 # 1, 2, 3
+source = NssSource(nss, indice = source_index)
+campbell = source.campbell()
+
+
+#### importing info from Vizier: ####
+viz_parameter_names = ['numax','__dnu_','Dnu','Per','Tperi','ecc']
+viz_parameter_errors = ['e_numax','e__dnu_','e_Dnu','e_Per','e_Tperi','e_ecc']
 
 
 
-ax.errorbar(0,rv_M1s[idx_123],e_rv_M1s[idx_123],capsize=2,label='RV',color='b'
-            ,fmt='o')
-ax.errorbar(1,rv_M2s[idx_90],e_rv_M2s[idx_90],capsize=2,color='b',fmt='o')
 
-ax.errorbar(-0.1,M1_litt[idx_123],e_M1_litt[idx_123],capsize=2,label='Seis litt',
-            color='green',fmt='o')
-ax.errorbar(0.9,M1_litt[idx_90],e_M1_litt[idx_90],capsize=2,color='green',
-            fmt='o')
+viz_parameters = np.zeros(shape=(len(viz_parameter_names),
+                                 len(labelsAndlocations)) )
+viz_errors = np.zeros(shape=(len(viz_parameter_errors),
+                                 len(labelsAndlocations)) )
 
-ax.errorbar(0.1,M_123,e_M_123,capsize=2,label='Seis',color='orange',fmt='o')
-ax.errorbar(1.1, M_90,e_M_90,capsize=2,color='orange',fmt='o')
 
-ax.set_xlim(-3,3)
-ax.legend()
+
+for j, ID in enumerate(labelsAndlocations.keys()):
+    tables_of_vizier = find_parameter(ID)
+    for table in tables_of_vizier:
+        for i, name in enumerate(viz_parameter_names):
+            try:
+                parameter = np.array(table[name])
+                viz_parameters[i,j] = parameter[0]
+            except:
+                pass
+    tables_of_error = find_parameter(ID,viz_parameter_errors)
+    for table in tables_of_error:
+        for i, name in enumerate(viz_parameter_errors):
+            try:
+                error = np.array(table[name])
+                viz_errors[i,j] = error[0]
+            except:
+                pass
+
+
+
+print(viz_parameters)
+print(viz_errors)
+
+#yerr = (temps_low,temps_high)
+
+################################ Plotting: #######################################
+
+
+offset = 1
+
+# Plotting dnu:
+fig, ax = plt.subplots()
+for j, ID in enumerate(labelsAndlocations.keys()):
+    
+    #from vizier:
+    vdnu = viz_parameters[2,j]
+    e_vdnu = viz_errors[2,j]
+    ax.errorbar(j,vdnu-offset*vdnu,e_vdnu,capsize=2,color='red')
+
+    vDnu = viz_parameters[3,j]
+    e_vDnu = viz_errors[3,j]
+    ax.errorbar(j,vDnu-offset*vdnu,e_vDnu,capsize=2,color='blue')
+
+    #from my work:
+    mdnu = mt.get_value('dnu',ID)
+    e_mdnu = mt.get_value('e_dnu',ID)
+    ax.errorbar(j,mdnu-offset*vdnu,e_mdnu,capsize=2,color='green')
+    
+    
+                 
+    
+#ax.legend()
+ax.set_ylabel('dnu [muHz]')
+ax.set_xticks(ticks = list(labelsAndlocations.values()),
+                  labels=labelsAndlocations.keys(),rotation=45)
+fig.tight_layout()
 plt.show()
+
+
+
+
+
+
+# Plotting masses:
+
+if False:
+    M_90, R_90, e_M_90, e_R_90 = scaling_relations(numax_90,e_numax_90,
+                                   dnu_90 ,e_dnu_90,Teff[idx_90][0])
+    M_123, R_123, e_M_123, e_R_123 = scaling_relations(numax_123,e_numax_123,
+                                   dnu_123 ,e_dnu_123,Teff[idx_123][0])
+    fig, ax = plt.subplots()
+    ax.errorbar(0,rv_M1s[idx_123],e_rv_M1s[idx_123],capsize=2,label='RV',color='b'
+                ,fmt='o')
+    ax.errorbar(1,rv_M2s[idx_90],e_rv_M2s[idx_90],capsize=2,color='b',fmt='o')
+
+    ax.errorbar(-0.1,M1_litt[idx_123],e_M1_litt[idx_123],capsize=2,label='Seis litt',
+                color='green',fmt='o')
+    ax.errorbar(0.9,M1_litt[idx_90],e_M1_litt[idx_90],capsize=2,color='green',
+                fmt='o')
+
+    ax.errorbar(0.1,M_123,e_M_123,capsize=2,label='Seis',color='orange',fmt='o')
+    ax.errorbar(1.1, M_90,e_M_90,capsize=2,color='orange',fmt='o')
+
+
+
+    ax.set_xticks(ticks = list(labelsAndlocations.values()),
+                  labels=labelsAndlocations.keys(),rotation=45)
+    fig.tight_layout()
+
+    ax.set_xlim(-3,3)
+    ax.legend()
+    plt.show()
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -15,6 +15,7 @@ from scipy.ndimage import gaussian_filter
 import emcee
 import os
 from multiprocessing import Pool
+import corner
 
 os.environ["OMP_NUM_THREADS"] = "1" #recommended setting for parallelizing emcee
 
@@ -278,6 +279,27 @@ def dnu_from_numax(numax):
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#########################################################################
+# Testing:
+#########################################################################
+'''
 #importing fitting parameters
 master_path = '/usr/users/au662080'
 ID = 'KIC10454113'
@@ -304,62 +326,123 @@ power_df = pd.read_csv(power_path)
 freq = power_df['Frequency'].to_numpy()
 power = power_df['power'].to_numpy()
 
+mode_nr = 1
+reg = 20
+for i in range(len(mode_params[mode_nr][0])):
+    i = i+1
+    
+    close = False #bool, whether there is a peak very close
 
-for i in range(len(mode_params[0][0])):
+    x_point = guess_points[mode_nr][0][i][0]
+    #eps1, H1, gam1, nu1,const1 = mode_params[mode_nr][0][i]
+    guess1 = guess_points[mode_nr][0][i][0]
+    
+    if mode_nr == 1:
+        for j in range(len(mode_params[2][0])):
+            v_point = guess_points[2][0][j][0]
+
+            #eps2, H2, gam2, nu2, const2 = mode_params[2][0][j]
+            
+            if abs(x_point - v_point) < 20:
+                close = True
+                break
+
+    if close:
+        print('close!')
+
     fig, ax = plt.subplots()
     
     #isolating the part of the spectrum we want to fit
-
-    x_idx = (( guess_points[0][0][i][0] - 20 < freq ) &
-             ( guess_points[0][0][i][0] + 20 > freq ) )
+    x_idx = (( x_point - reg < freq ) &
+             ( x_point + reg > freq ) )
     f = freq[x_idx]
     p = power[x_idx]
-    guess = guess_points[0][0][i][0]
-
-    a,b,c,d,e = mode_params[0][0][i]
+    
 
 
 
     #fitting with least squares
 
-    def mode(x,eps,H,gam,nu,const):
-        return eps*H / (1 + 4/gam**2 * (x - nu)**2) + const
+    
+    def mode(x,theta):
+        epsH,gam,nu,const = theta
+        return epsH / (1 + 4/gam**2 * (x - nu)**2) + const
+
 
     def mode_res(params,x,y):
-        eps = params['eps'].value
-        H = params['H'].value
+        epsH = params['epsH'].value
         gam = params['gam'].value
         nu = params['nu'].value
         const = params['const'].value
-        res = y - mode(x,eps,H,gam,nu,const)
+        res = y - mode(x,[epsH,gam,nu,const])
         return res
 
-    params = lmfit.Parameters()
-    params.add('eps',value=1)
-    params.add('H', value=3)
-    params.add('gam',value=10)
-    params.add('nu',d)
-    params.add('const',value=0)
-
-    fit = lmfit.minimize(mode_res, params, args=(f,p),
-                         xtol=1.e-8,ftol=1.e-8,max_nfev=500)
+    def mode_double(x,theta):
+        epsH1,gam1,nu1,const,epsH2,gam2,nu2 = theta
+        out = epsH1 / (1 + 4/gam1**2 * (x - nu1)**2) + const
+        out += epsH2 / (1 + 4/gam2**2 * (x - nu2)**2) + const
+        return out
     
-    print(lmfit.fit_report(fit,show_correl=False))
+    def mode_double_res(params,x,y):
+        epsH1 = params['epsH1'].value
 
-    eps = fit.params['eps'].value
-    H = fit.params['H'].value
-    gam = fit.params['gam'].value
-    nu = fit.params['nu'].value
-    const = fit.params['const'].value
+        gam1 = params['gam1'].value
+        nu1 = params['nu1'].value
+        const = params['const'].value
+        epsH2 = params['epsH2'].value
+        gam2 = params['gam2'].value
+        nu2 = params['nu2'].value
+        res = y - mode_double(x,[epsH1,gam1,nu1,const,epsH2,gam2,nu2])
+        return res
 
-    ax.plot(f,mode(f,eps,H,gam,nu,const),label='least squares fit', color='red')
+    if close:
+        params = lmfit.Parameters()
+        params.add('epsH1',value=3)
+        params.add('gam1',value=10)
+        params.add('nu1',x_point)
+        params.add('const',value=0)
+        params.add('epsH2',value=3)
+        params.add('gam2',value=10)
+        params.add('nu2',v_point)
+
+        fit = lmfit.minimize(mode_double_res, params, args=(f,p),
+                             xtol=1.e-8,ftol=1.e-8,max_nfev=500)
+        
+        print(lmfit.fit_report(fit,show_correl=False))
+
+        epsH1 = fit.params['epsH1'].value
+        gam1 = fit.params['gam1'].value
+        nu1 = fit.params['nu1'].value
+        const = fit.params['const'].value
+        epsH2 = fit.params['epsH2'].value
+        gam2 = fit.params['gam2'].value
+        nu2 = fit.params['nu2'].value
+
+        ax.plot(f,mode_double(f,[epsH1,gam1,nu1,const,epsH2,gam2,nu2]),
+                label='least squares fit', color='red')
+    else:
+        params = lmfit.Parameters()
+        params.add('epsH',value=3)
+        params.add('gam',value=10)
+        params.add('nu',x_point)
+        params.add('const',value=0)
+
+        fit = lmfit.minimize(mode_res, params, args=(f,p),
+                             xtol=1.e-8,ftol=1.e-8,max_nfev=500)
+        
+        print(lmfit.fit_report(fit,show_correl=False))
+
+        epsH = fit.params['epsH'].value
+        gam = fit.params['gam'].value
+        nu = fit.params['nu'].value
+        const = fit.params['const'].value
+
+        ax.plot(f,mode(f,[epsH,gam,nu,const]),label='least squares fit', color='red')
+    
 
 
     #Minimizing:
 
-    def mode(x,theta):
-        epsH,gam,nu,const = theta
-        return epsH / (1 + 4/gam**2 * (x - nu)**2) + const
 
     def log_likelihood(theta,xs,ys):
         out = 0
@@ -367,40 +450,67 @@ for i in range(len(mode_params[0][0])):
             out -= np.log(mode(x,theta)) + y/mode(x,theta)
         return out
 
-    nll = lambda *args: -log_likelihood(*args)
-    initial = np.array([2, 2, guess,1])
+    
+    def log_likelihood_double(theta,xs,ys):
+        out = 0
+        for x,y in zip(xs,ys):
+            out -= np.log(mode_double(x,theta)) + y/mode_double(x,theta)
+        return out
 
-    soln = minimize(nll, initial, args=(f,p),
-                    bounds=[(0.000001,10),(0.000001,10),(0.000001,10000),(0.000001,20)])
-    print(soln.x)
-    print(soln)
+
+    if close:
+        nll = lambda *args: -log_likelihood_double(*args)
+        initial = np.array([epsH1, gam1, nu1,const,epsH2, gam2, nu2])
+
+        soln = minimize(nll, initial, args=(f,p),
+                        bounds=[(0.000001,10),(-10,10),
+                                (0.000001,10000),(0.000001,20),
+                                (0.000001,10),
+                                (-10,10),(0.000001,10000)],
+                        method = 'Nelder-Mead')
+        print(soln.x)
+        print(soln)
+
+
+    else:
+
+        nll = lambda *args: -log_likelihood(*args)
+        initial = np.array([epsH, gam, nu,const])
+
+        soln = minimize(nll, initial, args=(f,p),
+                        bounds=[(0.000001,10),(-10,10),
+                                (0.000001,10000),(0.000001,20)],
+                        method = 'Nelder-Mead')
+        print(soln.x)
+        print(soln)
 
 
 
     #Smothing to illustrate 
     smoothed = gaussian_filter(p, sigma=6)
 
-
-
     #plotting
     
     ax.plot(f,p,label='power spectrum',zorder=1)
-    
-    ax.plot(f, mode(f,soln.x),label='maximized likelihood')
+
+    if close:
+        ax.plot(f, mode_double(f,soln.x),label='maximized likelihood')
+    else:
+        ax.plot(f, mode(f,soln.x),label='maximized likelihood')
     ax.plot(f,smoothed,label='smoothed')
 
     ax.legend()
 
-    ax.tick_params(axis='x', labelrotation=45)
     
     plt.show()
 
 
     #trying emcee:
 
+
     def log_prior(theta):
         epsH,gam,nu,const = theta
-        if 0 < epsH < 1000 and 0 < gam < 1000 and 0 < nu < 10000 and 0<const<1000:
+        if 0 < epsH < 1000 and -1000 < gam < 1000 and 0 < nu < 10000 and 0<const<1000:
             return 0.0
         return -np.inf
 
@@ -409,25 +519,89 @@ for i in range(len(mode_params[0][0])):
         if not np.isfinite(lp):
             return -np.inf
         return lp + log_likelihood(theta, x,y)
+    
+    def log_prior_double(theta):
+        epsH1,gam1,nu1,const,epsH2,gam2,nu2 = theta
+        if 0 < epsH1 < 1000 and -1000 < gam1 < 1000 and 0 < nu1 < 10000 and 0<const<1000:
+            if 0 < epsH2 < 1000 and -1000 < gam2 < 1000 and 0 < nu2 < 10000:
+                return 0.0
+        return -np.inf
 
-    pos = soln.x + 1e-4*np.random.randn(32,4)
-    nwalkers, ndim = pos.shape
+    def log_probability_double(theta,x,y):
+        lp = log_prior_double(theta)
+        if not np.isfinite(lp):
+            return -np.inf
+        return lp + log_likelihood_double(theta, x,y)
 
-    sampler = emcee.EnsembleSampler(nwalkers,ndim,log_probability,args=(f,p))
-    sampler.run_mcmc(pos,5000,progress=True)
+    if close:
+        nwalkers,ndim = 15,7
+        iterations = 1000
+        pos = soln.x + 1e-4*np.random.randn(nwalkers,ndim)
+        
+        with Pool(6) as pool:
+            sampler = emcee.EnsembleSampler(nwalkers,ndim,
+                                            log_probability_double,args=(f,p),
+                                            pool=pool)
+            sampler.run_mcmc(pos,iterations,progress=True)
 
-    fig, ax = plt.subplots(4, figsize=(10, 7), sharex=True)
-    samples = sampler.get_chain()
-    labels = ["epsH", "gam", "nu", "const"]
-    for i in range(ndim):
-        ax[i].plot(samples[:, :, i], "k", alpha=0.3)
-        ax[i].set_xlim(0, len(samples))
-        ax[i].set_ylabel(labels[i])
-        ax[i].yaxis.set_label_coords(-0.1, 0.5)
+        fig, ax = plt.subplots(ndim, figsize=(10, ndim), sharex=True)
+        samples = sampler.get_chain()
+        labels = ["epsH1", "gam1", "nu1", "const","epsH2", "gam2", "nu2"]
+        for i in range(ndim):
+            ax[i].plot(samples[:, :, i], "k", alpha=0.3)
+            ax[i].set_xlim(0, len(samples))
+            ax[i].set_ylabel(labels[i])
+            ax[i].yaxis.set_label_coords(-0.1, 0.5)
 
-    ax[-1].set_xlabel("step number")
+        ax[-1].set_xlabel("step number")
 
-    plt.show()
+        plt.show()
+
+        fig,ax = plt.subplots()
+
+        flat_samples = sampler.get_chain(discard=100, flat=True)
+
+        corner.corner(flat_samples, labels=labels,
+                            truths=soln.x)
+
+        plt.show()
+
+    else:
+        nwalkers,ndim = 15,4
+        
+        iterations = 1000
+        pos = soln.x + 1e-4*np.random.randn(nwalkers,ndim)
+
+        
+        with Pool(6) as pool:
+            sampler = emcee.EnsembleSampler(nwalkers,ndim,
+                                            log_probability,args=(f,p),
+                                            pool=pool)
+            sampler.run_mcmc(pos,iterations,progress=True)
+
+        fig, ax = plt.subplots(4, figsize=(10, 7), sharex=True)
+        samples = sampler.get_chain()
+        labels = ["epsH", "gam", "nu", "const"]
+        for i in range(ndim):
+            ax[i].plot(samples[:, :, i], "k", alpha=0.3)
+            ax[i].set_xlim(0, len(samples))
+            ax[i].set_ylabel(labels[i])
+            ax[i].yaxis.set_label_coords(-0.1, 0.5)
+
+        ax[-1].set_xlabel("step number")
+
+        plt.show()
+
+        fig,ax = plt.subplots()
+
+        flat_samples = sampler.get_chain(discard=100, flat=True)
+
+        corner.corner(flat_samples, labels=['epsH', 'gam', 'nu', 'const'],
+                            truths=soln.x)
+
+        plt.show()
+    
+'''
 
     
 

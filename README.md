@@ -1,6 +1,30 @@
 # Thesis
 Repository for my thesis work
 
+
+
+
+
+#############################################################
+# Seismology scripts
+#############################################################
+The scripts for analysing seismic data are divided into two folders astro_seis1 and astro_seis2, 
+for either data with signal from both stars or only from one (astro_seis1).
+
+
+
+
+
+
+
+#############################################################
+# RV scripts
+#############################################################
+The scripts for analysing RV data are generally divided into three folders step1, step2 and step3 
+which contain one or more of the scripts described below. 
+
+
+
 #Pipeline for NOT data:
 - The ordered files are downloaded and called reduced*.zip. Should be in Downloads      |By Hand|
 - Note the date of the oldest of these for later use in analyse_spectra                 |By Hand|

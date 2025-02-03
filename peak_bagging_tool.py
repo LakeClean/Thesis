@@ -180,6 +180,7 @@ def simple_peak_bagging(x_val,y_val,region=[],fitter='mode'):
                 canvas.draw()
 
     mode_params = [[],[],[]]
+    out_region = np.zeros(3)
     def fit_mode():
 
         if sigma != 0:
@@ -200,6 +201,8 @@ def simple_peak_bagging(x_val,y_val,region=[],fitter='mode'):
             try:
                 new_region = [float(USER_INP_z),float(USER_INP_x),
                               float(USER_INP_c)]
+                out_region[:] = [float(USER_INP_z),float(USER_INP_x),
+                              float(USER_INP_c)]
             except:
                 print('You entered region values that is not valid!')
                 return 0,0,0
@@ -214,7 +217,8 @@ def simple_peak_bagging(x_val,y_val,region=[],fitter='mode'):
                 ## starting guesses: ##
                 idx = np.argmin(abs(y_lim - point[1]))
                 mu1 = x_lim[idx]
-                
+
+                print(point)
                 params = lmfit.Parameters()
                 params.add('eps',value=1)
                 params.add('H', value=3)
@@ -286,12 +290,41 @@ def simple_peak_bagging(x_val,y_val,region=[],fitter='mode'):
 
     root.mainloop()
 
-    return points, gauss_params, mode_params
+
+    #Making result readable:
+    out_points = np.zeros(shape=(len(points),
+                                 max([len(x) for x in points]),
+                                 2)
+                          ) #alocating space
+    
+    for k in range(len(points)): #for every set
+        for i in range(len(points[k])): #for every row
+            for j in range(len(points[k][i])): #for every column
+                out_points[k,i,j] = points[k][i][j]
+
+                
+    out_mode = np.zeros(shape=(len(mode_params),
+                               max([len(x) for x in mode_params]),
+                               5)
+                        )
+    for k in range(len(mode_params)): #for every set
+        for i in range(len(mode_params[k])): #for every row
+            for j in range(len(mode_params[k][i])): #for every column
+                out_mode[k,i,j] = mode_params[k][i][j]
+            
+
+    return out_points, gauss_params, out_mode, out_region
 
 #Tests:
 if False:
     i = np.linspace(-10,10,1000)
     #y = Gaussian(x,1,1,1) 
     j= [np.sin(x) + rd.uniform(0,1) for x in i]
-    print(simple_peak_bagging(i,j))
+    guess_points, gauss_params, mode_params,region = simple_peak_bagging(i,j)
+    print(guess_points)
+    print(guess_points.shape)
+    print(mode_params)
+    print(np.array(mode_params).shape)
+    print(region)
+    print(type(region))
 

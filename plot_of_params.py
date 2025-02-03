@@ -53,11 +53,11 @@ e_G = tab['e_G_GTI'].data
 
 
 
-SB1 = ['KIC-4914923']
-SB2 = ['KIC-9025370', 'KIC-12317678', 'KIC-9693187']
+SB1 = ['KIC4914923']
+SB2 = ['KIC9025370', 'KIC12317678', 'KIC9693187']
 #both = ['KIC-9025370', 'KIC-12317678', 'KIC-9693187','KIC-4914923']
 
-both = {'KIC-9025370':1, 'KIC-12317678':2, 'KIC-9693187':3,'KIC-4914923':4}
+both = {'KIC9025370':1, 'KIC12317678':2, 'KIC9693187':3,'KIC4914923':4}
 
 for i in range(len(IDs)):
 
@@ -90,14 +90,6 @@ for i in range(len(IDs)):
         #Argument of periastron:
         ax[3].errorbar(ws[i], both[IDs[i]], xerr=e_ws[i],capsize=2,color='blue')
         ax[3].errorbar(G_w, both[IDs[i]]+0.1, xerr=e_G_w,capsize=2,color='green')
-
-
-
-        
-        
-
-
-
 
 
 

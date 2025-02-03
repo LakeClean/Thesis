@@ -10,7 +10,7 @@ tab = mt.get_table()
 IDs, G_IDs = tab['ID'].data, tab['Gaia_ID'].data
 RAs, DECs = tab['RA'].data, tab['DEC'].data
 
-def find_parameter(ID, parameter='k'):
+def find_parameter(ID, parameters=[]):
     #Finding Gaia ID:
     idx = (IDs == ID)
     G_ID = G_IDs[idx]
@@ -38,18 +38,39 @@ def find_parameter(ID, parameter='k'):
 
     catalogs = TI + seis + gaia + apogee + spec + MNRAS
     catalogs += Mathur + Kepler_team + LAMOST + Huber
+
+    if len(parameters) == 0:
     
-    
-    result = Vizier.query_region(coord.SkyCoord(ra=RA, dec=DEC,
+        result = Vizier.query_region(coord.SkyCoord(ra=RA, dec=DEC,
+                                            unit=(u.deg, u.deg),
+                                                frame='icrs'),
+                                radius=5*u.arcsec,
+                                catalog=catalogs)
+    else:
+        vizier = Vizier(columns = parameters)
+        result = vizier.query_region(coord.SkyCoord(ra=RA, dec=DEC,
                                             unit=(u.deg, u.deg),
                                                 frame='icrs'),
                                 radius=5*u.arcsec,
                                 catalog=catalogs)
     return result
+
+
+#Thiele Innes:
+# 'ATI', 'BTI', 'FTI', 'GTI', 'CTI', 'HTI'
+# Period
+
+result = find_parameter('KIC4914923')
+#print(result[0])
+
+
 # 4260884, 9652971
 RGBs = ['KIC4457331', 'KIC4260884', 'KIC9652971']
-MSs = ['KIC4914923', 'KIC9025370', 'KIC10454113', 'KIC12317678']
+MSs = ['KIC4914923', 'KIC9025370', 'KIC10454113',
+       'KIC12317678','KIC4260884', 'KIC9652971']
 for j in MSs:
+    break
+
     print(j)
     for i in find_parameter(j):
         try:
