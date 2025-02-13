@@ -271,6 +271,7 @@ def analyse_spectrum(file, template='MS',start_order=1, append_to_log=False,
 
     #Going through each order
     for i in np.arange(start_order,no_orders,1):
+        print(f'bin#{i}')
         
 
         #Pick out correct wl range
@@ -570,7 +571,7 @@ for file,ID,date in zip(files[0:],IDs[0:],dates[0:]):
     #                 show_bin_plots=False,show_plots=False)
     #if ID == 'KIC9025370':
         #if date == '2013-08-06T23:33:46.4':
-        if (Time(date).jd > Time('2024-11-20').jd):# and (Time(date).jd > 2457294):
+        if (Time(date).jd > Time('2025-02-01').jd):# and (Time(date).jd > 2457294):
             print(f'Spectrum: {k}/{len(files)}, Time: {time()-time1}s')
             time1 = time()
             k+=1

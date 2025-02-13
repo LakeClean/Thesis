@@ -345,6 +345,7 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
                    ls='--',color='black',alpha=0.4,label=f'v0={np.round(v0,2)}km/s')
 
         #For KIC10454113:
+        '''
         tmax = proxy_time[np.where(max(fit_rvs) == fit_rvs)[0]]
         t2, rv2 = -1190.4594305553474,-32.545914715462075
         print('here:', np.radians(w+180)%(2*np.pi), (np.radians(w+180) + 2*np.pi/p * (t2-tmax))%(2*np.pi) )
@@ -353,7 +354,7 @@ def plot_rv_time(ID,fit_params=[],limits=[20,60],SB_type=1,
         
         fit_rv2 = sb.radial_velocity(proxy_time,k=k2,e=e,w=(180+w),p=p,t0=t0,v0=v0)
         ax[0].plot(proxy_time,fit_rv2,label='fit 2.dary component')
-
+        '''
         ax[0].legend()
 
 

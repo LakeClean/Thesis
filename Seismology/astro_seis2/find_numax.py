@@ -11,6 +11,7 @@ from scipy.optimize import minimize
 
 
 
+
 master_path = '/usr/users/au662080'
 
 '''
@@ -91,7 +92,7 @@ def my_diff(xs,e_xs):
     n_e_diffs = e_diffs/sum(e_diffs) # The normalized error
     diffs = np.array(diffs)
     e_diffs = np.array(e_diffs)
-    diff = sum(diffs*n_e_diffs)
+    diff = sum(diffs*e_diffs)
     e_diff = np.std(diffs) * np.sqrt(sum(n_e_diffs**2))
     return diff, e_diff
 
@@ -144,20 +145,17 @@ def analyse_power(ID,saving_data = True, plotting = True,):
         
         for k in range(len(ml_params)):
             
-
-
-
             #sorting in orders of n based on the guesses by eye:
-            sorted_amplitudes = [x for y,x in sorted(zip(guess_points[k],amplitudes[k]))]
-            sorted_e_amplitudes = [x for y,x in sorted(zip(guess_points[k],e_amplitudes[k]))]
-            sorted_nus = [x for y,x in sorted(zip(guess_points[k],ml_params[k,:,1]))]
-            sorted_e_nus = [x for y,x in sorted(zip(guess_points[k],e_ml_params[k,:,1]))]
-            sorted_gams = [x for y,x in sorted(zip(guess_points[k],ml_params[k,:,2]))]
-            sorted_e_gams = [x for y,x in sorted(zip(guess_points[k],e_ml_params[k,:,2]))]
+            sorted_amplitudes = [x for y,x in zip(guess_points[k],amplitudes[k])]
+            sorted_e_amplitudes = [x for y,x in zip(guess_points[k],e_amplitudes[k])]
+            sorted_nus = [x for y,x in zip(guess_points[k],ml_params[k,:,1])]
+            sorted_e_nus = [x for y,x in zip(guess_points[k],e_ml_params[k,:,1])]
+            sorted_gams = [x for y,x in zip(guess_points[k],ml_params[k,:,2])]
+            sorted_e_gams = [x for y,x in zip(guess_points[k],e_ml_params[k,:,2])]
             orders = np.arange(0,len(sorted_amplitudes),1)
 
             #Removing zeros
-            idx = np.array(sorted_nus) > 0
+            idx = np.array(sorted_amplitudes) > 0
             sorted_amplitudes = np.array(sorted_amplitudes)[idx]
             sorted_e_amplitudes = np.array(sorted_e_amplitudes)[idx]
             sorted_nus = np.array(sorted_nus)[idx]
@@ -178,16 +176,14 @@ def analyse_power(ID,saving_data = True, plotting = True,):
                     clusters.append([sorted_nus[i]])
                     e_clusters.append([sorted_e_nus[i]])
 
-
-
             #Averaging each of the clusters
             alt_dnus = []
             e_alt_dnus = []
             for cluster, e_cluster in zip(clusters,e_clusters):
                 if len(cluster)>1:
-                    alt_dnu_i, e_alt_dnu_i = my_diff(cluster,e_cluster)
-                    alt_dnus.append(alt_dnu_i)
-                    e_alt_dnus.append(e_alt_dnu_i)
+                    alt_dnu, e_alt_dnu = my_diff(cluster,e_cluster)
+                    alt_dnus.append(alt_dnu)
+                    e_alt_dnus.append(e_alt_dnu)
 
             alt_dnus = np.array(alt_dnus)
             e_alt_dnus = np.array(e_alt_dnus)
@@ -216,7 +212,7 @@ def analyse_power(ID,saving_data = True, plotting = True,):
                                  args=(sorted_nus,sorted_amplitudes,sorted_e_amplitudes),
                                  xtol=1.e-8,ftol=1.e-8,max_nfev=500)
             
-            #print(lmfit.fit_report(fit,show_correl=False))
+            print(lmfit.fit_report(fit,show_correl=False))
             A = fit.params['A'].value
             mu = fit.params['mu'].value
             std = fit.params['std'].value
@@ -266,20 +262,38 @@ def analyse_power(ID,saving_data = True, plotting = True,):
 
 
 
-if False:
-    analyse_power('KIC10454113',saving_data = True, plotting = True)
-
-if True: 
-    analyse_power('KIC9693187',saving_data = True, plotting = True) 
+if True:
+    analyse_power('KIC10454113',saving_data = True, plotting = True) 
 
 if False:  
-    analyse_power('KIC9025370',saving_data = True, plotting = True)
+    analyse_power('KIC9025370',saving_data = True, plotting = True,
+                  filtering = True,find_ind_peaks = True)
 
 if False: 
-    analyse_power('KIC12317678',saving_data = True, plotting = True)
+    analyse_power('KIC12317678',saving_data = True, plotting = True,
+                  filtering = True,find_ind_peaks = False)
 
 if False: 
-    analyse_power('KIC4914923',saving_data = True, plotting = True)
+    analyse_power('KIC4914923',saving_data = True, plotting = True,
+                  filtering = True,find_ind_peaks = True)
+
+'''
+if True:
+    analyse_power('EPIC236224056',saving_data = True, plotting = False,
+                  filtering = True,find_ind_peaks = False)
+if True:
+    analyse_power('EPIC246696804',saving_data = True, plotting = False,
+                  filtering = True,find_ind_peaks = False)
+if True:
+    analyse_power('EPIC249570007',saving_data = True, plotting = False,
+                  filtering = True,find_ind_peaks = False)
+if True:
+    analyse_power('EPIC230748783',saving_data = True, plotting = False,
+                  filtering = True,find_ind_peaks = False)
+if True:
+    analyse_power('EPIC212617037',saving_data = True, plotting = False,
+                  filtering = True,find_ind_peaks = False)
+'''
 
 
 

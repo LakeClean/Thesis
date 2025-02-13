@@ -10,6 +10,7 @@ Repository for my thesis work
 #############################################################
 The scripts for analysing seismic data are divided into two folders astro_seis1 and astro_seis2, 
 for either data with signal from both stars or only from one (astro_seis1).
+Note that the double seismic stars have not been analyses yet
 
 
 

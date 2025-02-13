@@ -274,25 +274,25 @@ def analyse_power(ID,saving_data = True, plotting = True,
             
 
 
-if False: #all, mode1, mode02 #Good
+if False: #all, mode1, mode02
     analyse_power('KIC10454113',saving_data = True,reg=40,
                   plotting = False,peak_type='mode02')
 
-if True: #all, mode1, mode02 # Problem runs too fast??
+if False: #all, mode1, mode02
     analyse_power('KIC9693187',saving_data = True,reg=30,
-                  plotting = False,peak_type='mode1') 
+                  plotting = False,peak_type='all') 
 
-if False: #all, mode1, mode02 # good
+if True:  
     analyse_power('KIC9025370',saving_data = True, reg=20,
-                  plotting = False,peak_type='mode02')
+                  plotting = True,peak_type='all')
 
-if False: #all, mode1,mode02 #good
+if False: #all, mode1,mode02
     analyse_power('KIC12317678',saving_data = True,reg=20,
                   plotting = True,peak_type='mode02')
 
-if False:  #all, mode1, 
-    analyse_power('KIC4914923',saving_data = True, reg=20,
-                  plotting = False,peak_type='mode02')
+if False: 
+    analyse_power('KIC4914923',saving_data = True, plotting = True,
+                  filtering = True,find_ind_peaks = True)
 
 '''
 [EPIC236224056,EPIC246696804,EPIC249570007,EPIC230748783,EPIC212617037]

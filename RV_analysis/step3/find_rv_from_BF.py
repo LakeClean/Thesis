@@ -423,7 +423,7 @@ for data_type, log_path, good_region in zip(data_types, log_paths, good_regions)
 
     if True:
         for ID in IDs:
-            if ID[:4] == 'EPIC':
+            if ID == 'KIC10454113':
                 find_rv_time(ID,
                      log_path=log_path,
                      data_type=data_type,

@@ -57,9 +57,6 @@ labelsAndlocations = {'KIC9025370':0, 'KIC12317678':1,
 
 #### My Parameters: ####
 
-#my_parameter_names = ['numax','dnu','Per','Tperi','ecc']
-#my_parameters = np.zeros(shape=(len(my_parameter_names), len(labelsAndlocations)) )
-
 
 ###importing RV-data
 rv_M1s = tab['M1'].data
@@ -152,30 +149,34 @@ print(viz_errors)
 offset = 1
 
 # Plotting dnu:
-fig, ax = plt.subplots()
+fig, ax = plt.subplots(1,4)
 for j, ID in enumerate(labelsAndlocations.keys()):
     
     #from vizier:
     vdnu = viz_parameters[2,j]
     e_vdnu = viz_errors[2,j]
-    ax.errorbar(j,vdnu-offset*vdnu,e_vdnu,capsize=2,color='red')
+    ax[j].errorbar(1,vdnu,e_vdnu,marker='s',capsize=2,color='red')
+    ax[j].plot([-2,5],[vdnu,vdnu],alpha=0.3,ls='--',color='red')
 
     vDnu = viz_parameters[3,j]
     e_vDnu = viz_errors[3,j]
-    ax.errorbar(j,vDnu-offset*vdnu,e_vDnu,capsize=2,color='blue')
+    ax[j].errorbar(2,vDnu,e_vDnu,marker='s',capsize=2,color='blue')
+    ax[j].plot([-2,5],[vDnu,vDnu],alpha=0.3,ls='--',color='blue')
 
     #from my work:
     mdnu = mt.get_value('dnu',ID)
     e_mdnu = mt.get_value('e_dnu',ID)
-    ax.errorbar(j,mdnu-offset*vdnu,e_mdnu,capsize=2,color='green')
-    
-    
+    ax[j].errorbar(3,mdnu,e_mdnu,marker='s',capsize=2,color='green')
+    ax[j].plot([-2,5],[mdnu,mdnu],alpha=0.3,ls='--',color='green')
+
+    ax[j].set_xlabel(ID,rotation = 45)
+    ax[j].set_xticks([])
+    ax[j].set_xlim(-2,5)
                  
     
-#ax.legend()
-ax.set_ylabel('dnu [muHz]')
-ax.set_xticks(ticks = list(labelsAndlocations.values()),
-                  labels=labelsAndlocations.keys(),rotation=45)
+
+ax[0].set_ylabel('dnu [muHz]')
+
 fig.tight_layout()
 plt.show()
 
