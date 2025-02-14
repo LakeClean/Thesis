@@ -10,6 +10,27 @@ tab = mt.get_table()
 IDs, G_IDs = tab['ID'].data, tab['Gaia_ID'].data
 RAs, DECs = tab['RA'].data, tab['DEC'].data
 
+'''
+catalogs = ['I/357/tboasb1c', 'I/357/tbooc', 'J/ApJ/835/173/table3','J/ApJS/210/1/table1',
+          'J/ApJS/233/23/table3', 'J/A+A/674/A106/table1', 'J/ApJS/236/42/giants',
+          'J/ApJ/844/102/table1']
+
+parameters = ['numax']
+
+vizier = Vizier(columns = parameters)
+result = vizier.query_region(coord.SkyCoord(ra=RAs[-4], dec=DECs[-4],
+                                            unit=(u.deg, u.deg),
+                                                frame='icrs'),
+                                radius=5*u.arcsec,
+                                catalog=catalogs)
+for i in result:
+    print(i['numax'])
+print(result)
+'''
+
+
+#Gaia DR3 2131620306552653312
+
 def find_parameter(ID, parameters=[]):
     #Finding Gaia ID:
     idx = (IDs == ID)
@@ -55,12 +76,24 @@ def find_parameter(ID, parameters=[]):
                                 catalog=catalogs)
     return result
 
+'''
+result = find_parameter('KIC10454113',['dnu'])
+print(result.keys())
+#print(result.format_table_list().split('\n'))
+for i in result:
+    try:
+        print(float(i['dnu']))
+    except:
+        continue
+input()
+'''
+
 
 #Thiele Innes:
 # 'ATI', 'BTI', 'FTI', 'GTI', 'CTI', 'HTI'
 # Period
 
-result = find_parameter('KIC4914923')
+#result = find_parameter('KIC4914923')
 #print(result[0])
 
 
@@ -68,21 +101,23 @@ result = find_parameter('KIC4914923')
 RGBs = ['KIC4457331', 'KIC4260884', 'KIC9652971']
 MSs = ['KIC4914923', 'KIC9025370', 'KIC10454113',
        'KIC12317678','KIC4260884', 'KIC9652971']
-for j in MSs:
+for j in ['KIC9025370']: #MSs:
     break
+    
 
-    print(j)
-    for i in find_parameter(j):
+    print(find_parameter(j))
+    for i,table in enumerate(find_parameter(j)):
+        
         try:
-            print(i['numax'])
+            print(i, table['numax'])
         except:
             pass
         try:
-            print(i['__dnu'])
+            print(i, table['__dnu'])
         except:
             pass
         try:
-            print(i['Dnu'])
+            print(i, table['Dnu'])
         except:
             pass
 

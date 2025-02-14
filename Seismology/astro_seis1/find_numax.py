@@ -118,8 +118,8 @@ def analyse_power(ID,saving_data = True, plotting = True,):
     #################### Analysing: ################################
     
     #Finding numax:
-    alt_dnus = np.zeros(3) #an alternative dnu estimate
-    e_alt_dnus = np.zeros(3) # error in alternative dnu estimate
+    alt_dnus_out = np.zeros(3) #an alternative dnu estimate
+    e_alt_dnus_out = np.zeros(3) # error in alternative dnu estimate
     numax_est = np.zeros(3) #positions of gaussian for modes
     e_numax_est = np.zeros(3) #'error' of gaussian for modes
 
@@ -166,6 +166,8 @@ def analyse_power(ID,saving_data = True, plotting = True,):
             sorted_e_gams = np.array(sorted_e_gams)[idx]
             orders = orders[idx]
 
+            if len(sorted_amplitudes)<2:
+                continue
 
             #Sorting into points that are adjacent (cluster)
             clusters = [[]]
@@ -189,18 +191,27 @@ def analyse_power(ID,saving_data = True, plotting = True,):
                     alt_dnus.append(alt_dnu_i)
                     e_alt_dnus.append(e_alt_dnu_i)
 
+
             alt_dnus = np.array(alt_dnus)
             e_alt_dnus = np.array(e_alt_dnus)
 
-            n_e_alt_dnus = e_alt_dnus / sum(e_alt_dnus) #normalized errors
+            
 
-            alt_dnu = sum(n_e_alt_dnus * alt_dnus)
-            e_alt_dnu = np.std(alt_dnus) * np.sqrt(sum(n_e_alt_dnus**2))
+            
+            if len(alt_dnus)>1 :
+                n_e_alt_dnus = e_alt_dnus / sum(e_alt_dnus) #normalized errors
+                alt_dnu = sum(n_e_alt_dnus * alt_dnus)
+                e_alt_dnu = np.std(alt_dnus) * np.sqrt(sum(n_e_alt_dnus**2))
+            else:
+                alt_dnu = alt_dnus[0]
+                e_alt_dnu = e_alt_dnus[0]
+                
+            alt_dnus_out[k] = alt_dnu
+            e_alt_dnus_out[k] = e_alt_dnu
             
         
 
             
-            #finding alternative dnu
             if len(sorted_amplitudes) <4:
                 continue
 
@@ -225,10 +236,12 @@ def analyse_power(ID,saving_data = True, plotting = True,):
             print('covariance:',fit.covar)
             try:
                 e_A,e_mu,e_std,e_floor = np.sqrt(np.diagonal(fit.covar))
+                #e_mu,e_std,e_floor = np.sqrt(np.diagonal(fit.covar))
             except:
                 e_A,e_mu,e_std,e_floor = 0,0,0,0
+                #e_mu,e_std,e_floor = 0,0,0
 
-            if mode == 'all':
+            if mode == 'mode1':
                 numax_est[k] = mu
                 e_numax_est[k] = e_mu
 
@@ -253,32 +266,35 @@ def analyse_power(ID,saving_data = True, plotting = True,):
 
     for i in range(3): ax[i].legend(loc='best',bbox_to_anchor=(0.5,0.0))
     plt.show()
+
+    print('numax: ', numax_est, e_numax_est)
+    print('alternative dnus: ', alt_dnus_out,e_alt_dnus_out)
     
 
     if saving_data: save_data(ID, 'numax',
                                   [numax_est,e_numax_est],
                                   ['numax','numax_error'])
     
-    if saving_data: save_data(ID, 'alt_dnu', [alt_dnus,e_alt_dnus],
+    if saving_data: save_data(ID, 'alt_dnu', [alt_dnus_out,e_alt_dnus_out],
                                   ['alt_dnu', 'e_alt_dnu'])
 
 
 
 
 
-if False:
+if True:
     analyse_power('KIC10454113',saving_data = True, plotting = True)
 
 if True: 
     analyse_power('KIC9693187',saving_data = True, plotting = True) 
 
-if False:  
+if True:  
     analyse_power('KIC9025370',saving_data = True, plotting = True)
 
-if False: 
+if True: 
     analyse_power('KIC12317678',saving_data = True, plotting = True)
 
-if False: 
+if True: 
     analyse_power('KIC4914923',saving_data = True, plotting = True)
 
 
